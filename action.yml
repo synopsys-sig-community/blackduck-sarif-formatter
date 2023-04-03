@@ -1,0 +1,46 @@
+name: "Black Duck Sarif Formatter"
+description: "Will use Black Duck API to create sarif format outputfile from it."
+author: Jouni Lehto
+branding:
+  icon: code
+  color: blue
+inputs:
+  log_level:
+    description: Logging level
+    default: DEBUG
+    required: false
+  url:
+    description: "Black DuckURL"
+    required: true
+  token:
+    description: "Black Duck Access token"
+    required: true
+    default: ${{github.repository}}
+  project:
+    description: "Black Duck project name"
+    required: false
+    default: ${{github.repository}}
+  version:
+    description: "Black Duck project version name"
+    required: false
+    default: ${{github.ref_name}}
+  policy_categories:
+    description: "Comma separated list of policy categories, which violations will affect. Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=SECURITY,LICENSE"
+    required: false
+    default: SECURITY,LICENSE #Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL]
+  outputFile:
+    description: "Filename with path where it will be created, example: github.workspace/blackduckFindings.sarif.json (default)"
+    default: ${{github.workspace}}/blackduckFindings.sarif.json
+    required: false
+  policies:
+    description: "If given, policy information is added"
+    default: "false"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    # Run the Python script
+    - run: |
+        python3 ${{github.action_path}}/blackduckResultsToSarif.py --policies=${{inputs.policies}} --outputFile=${{inputs.outputFile}} --url=${{inputs.url}} --token=${{inputs.token}}  --project=${{inputs.project}} --version=${{inputs.version}} --policy_categories=${{inputs.policy_categories}} --log_level=${{inputs.log_level}} --url=${{inputs.url}}
+      shell: bash
