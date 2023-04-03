@@ -15,7 +15,6 @@ inputs:
   token:
     description: "Black Duck Access token"
     required: true
-    default: ${{github.repository}}
   project:
     description: "Black Duck project name"
     required: false
