@@ -68,7 +68,7 @@ def addFindings():
                         ruleIds.append(ruleId)
                     ## Adding results for vulnerabilities
                     bdLink = f'[See in Black Duck]({vulnerability["_meta"]["href"]})'
-                    result['message'] = {"text": f'{vulnerability["name"]}\n\n{bdLink}'}
+                    result['message'] = {"text": f'{bdLink}\n\n{vulnerability["name"]}'}
                     result['ruleId'] = ruleId
                     result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:///" + checkOrigin(component)}}}]
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
@@ -103,8 +103,6 @@ def addFindings():
 def addTags(cve):
     tags = []
     tags.append("security")
-    if cve and cve.lower().startswith("cve"):
-        tags.append(f'external/cve/CVE-2021-43113')
     return tags
 
 def checkOrigin(component):
