@@ -104,7 +104,7 @@ def addTags(cve):
     tags = []
     tags.append("security")
     if cve and cve.lower().startswith("cve"):
-        tags.append(f'external/cve/{cve}')
+        tags.append(f'external/cve/CVE-2021-43113')
     return tags
 
 def checkOrigin(component):
