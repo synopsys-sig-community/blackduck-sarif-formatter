@@ -70,7 +70,7 @@ def addFindings():
                     bdLink = f'[See in Black Duck]({vulnerability["_meta"]["href"]})'
                     result['message'] = {"text": f'{vulnerability["name"]}\n\n{bdLink}'}
                     result['ruleId'] = ruleId
-                    result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": checkOrigin(component)}}}]
+                    result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:///" + checkOrigin(component)}}}]
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
             if args.policies:
@@ -95,7 +95,7 @@ def addFindings():
                             bdLink = f'[See in Black Duck]({component["component"]})'
                             result['message'] = {"text":f'{policyInfo["name"]}: {policyInfo["category"]}\n\n{bdLink}'}
                             result['ruleId'] = ruleId
-                            result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": checkOrigin(component)}}}]
+                            result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:///" + checkOrigin(component)}}}]
                             result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policyInfo["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                             results.append(result)
     return results, rules
