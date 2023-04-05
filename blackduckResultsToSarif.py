@@ -60,9 +60,9 @@ def addFindings():
                     ## Adding vulnerabilities as a rule
                     if not ruleId in ruleIds:
                         rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
-                            "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(vulnerability)},
-                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown":f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                            "properties": {"category": checkOrigin(component), "security-severity": nativeSeverityToNumber(vulnerability["severity"].lower()), "tags": addTags(vulnerability, None)},
+                            "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
+                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(vulnerability)},
+                            "properties": {"category": checkOrigin(component), "security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, None)},
                             "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
                         rules.append(rule)
                         ruleIds.append(ruleId)
@@ -99,16 +99,24 @@ def addFindings():
                             results.append(result)
     return results, rules
 
+def getSeverityScore(vulnerability):
+    return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
+
 def getHelpMarkdown(vulnerability):
-    vector = vulnerability["cvss3"]["vector"]
-    attackVector = vulnerability["cvss3"]["attackVector"]
-    attackComplexity = vulnerability["cvss3"]["attackComplexity"]
-    confidentialityImpact = vulnerability["cvss3"]["confidentialityImpact"]
-    integrityImpact = vulnerability["cvss3"]["integrityImpact"]
-    availabilityImpact = vulnerability["cvss3"]["availabilityImpact"]
-    privilegesRequired = vulnerability["cvss3"]["privilegesRequired"]
-    scope = vulnerability["cvss3"]["scope"]
-    userInteraction = vulnerability["cvss3"]["userInteraction"]
+    cvss_version = ""
+    if "cvss3" in vulnerability:
+        cvss_version = "cvss3"
+    else:
+        cvss_version = "cvss2"
+    vector = f'{vulnerability[cvss_version]["vector"] if "vector" in vulnerability else ""}'
+    attackVector = f'{vulnerability[cvss_version]["attackVector"] if "attackVector" in vulnerability else ""}'
+    attackComplexity = f'{vulnerability[cvss_version]["attackComplexity"] if "attackComplexity" in vulnerability else ""}'
+    confidentialityImpact = f'{vulnerability[cvss_version]["confidentialityImpact"] if "confidentialityImpact" in vulnerability else ""}'
+    integrityImpact = f'{vulnerability[cvss_version]["integrityImpact"] if "integrityImpact" in vulnerability else ""}'
+    availabilityImpact = f'{vulnerability[cvss_version]["availabilityImpact"] if "availabilityImpact" in vulnerability else ""}'
+    privilegesRequired = f'{vulnerability[cvss_version]["privilegesRequired"] if "privilegesRequired" in vulnerability else ""}'
+    scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability else ""}'
+    userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability else ""}'
     bdsa_link = ""
     if vulnerability["source"] == "BDSA":
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) \| '
@@ -119,18 +127,7 @@ def getHelpMarkdown(vulnerability):
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "NVD":
         cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")})'
-    messageText = f'\
-        | Description | \n\
-        | :----------- | \n\
-        | {vulnerability["description"] if vulnerability["description"] else "-"} |\n| {bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""} |\n\n\
-        ## Base Score Metrics (CVSS v3.x Metrics)\n\
-        |  |  |  |  |\n\
-        | :-- | :-- | :-- | :-- |\n\
-        | Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n\
-        | Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n\
-        | Integrity | **{integrityImpact}** | Scope | **{scope}** |\n\
-        | Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n\
-        {vector}'
+    messageText = f'| Description | \n| :----------- |\n| {vulnerability["description"] if vulnerability["description"] else "-"} |\n| {bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""} |\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|  |  |  |  |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
     return messageText
 
 
@@ -140,7 +137,7 @@ def addTags(vulnerability, policy_name):
         cwes = []
         for metadata in vulnerability['_meta']['links']:
             if metadata['rel'] == "cwes":
-                cwes.append("external/cwe/" + metadata["href"].split("/")[-1])
+                cwes.append("external/cwe/" + metadata["href"].split("/")[-1].lower())
         tags.extend(cwes)
     elif policy_name:
         tags.append(policy_name)
