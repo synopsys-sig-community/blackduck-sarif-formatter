@@ -127,7 +127,13 @@ def getHelpMarkdown(vulnerability):
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "NVD":
         cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")})'
-    messageText = f'## Description\n {vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|  |  |  |  |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+    messageText = f'\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|  |  |  |  |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+    if vulnerability:
+        messageText += "\n\n## References\n"
+        for metadata in vulnerability['_meta']['links']:
+            if metadata['rel'] == "cwes":
+                cwe = metadata["href"].split("/")[-1].lower()
+                messageText += f'* Common Weakness Enumeration: [{cwe}](https://cwe.mitre.org/data/definitions/{cwe.split("-")[-1]}.html)\n'
     return messageText
 
 
