@@ -34,12 +34,12 @@ def createFilterForCompoents():
     return policyCategoryOptions[:-1]
 
 def getLinksData(hub, data, relName):
-    return hub.execute_get(f'{getLinksUrl(data,relName)}?limit={MAX_LIMIT}').json()
+    return hub.execute_get(f'{getLinksparam(data,relName,"href")}?limit={MAX_LIMIT}').json()
 
-def getLinksUrl(data, relName):
+def getLinksparam(data, relName, param):
     for metadata in data['_meta']['links']:
         if metadata['rel'] == relName:
-            return metadata['href']
+            return metadata[param]
 
 def addFindings():
     global args
@@ -60,15 +60,14 @@ def addFindings():
                     ## Adding vulnerabilities as a rule
                     if not ruleId in ruleIds:
                         rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
-                            "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'},
+                            "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(vulnerability)},
                             "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown":f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                            "properties": {"category": checkOrigin(component), "security-severity": nativeSeverityToNumber(vulnerability["severity"].lower()), "tags": addTags(vulnerability["name"])},
+                            "properties": {"category": checkOrigin(component), "security-severity": nativeSeverityToNumber(vulnerability["severity"].lower()), "tags": addTags(vulnerability, None)},
                             "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
                         rules.append(rule)
                         ruleIds.append(ruleId)
                     ## Adding results for vulnerabilities
-                    bdLink = f'[See in Black Duck]({vulnerability["_meta"]["href"]})'
-                    result['message'] = {"text": f'{bdLink}\n\n{vulnerability["name"]}'}
+                    result['message'] = f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'
                     result['ruleId'] = ruleId
                     result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:///" + checkOrigin(component)}}}]
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
@@ -87,7 +86,7 @@ def addFindings():
                                 rule = {"id":ruleId, "helpUri": policyInfo['_meta']['href'], "shortDescription":{"text":f'{policyInfo["description"] if "description" in policyInfo else "-"}'}, 
                                     "fullDescription":{"text":f'{policyInfo["description"][:1000] if "description" in policyInfo else policyInfo["name"]}', "markdown":f'{policyInfo["description"][:1000] if "description" in policyInfo else policyInfo["name"]}'},
                                     "help":{"text":f'{policyInfo["description"] if "description" in policyInfo else policyInfo["name"]}', "markdown":f'{policyInfo["description"] if "description" in policyInfo else policyInfo["name"]}'},
-                                    "properties": {"category":checkOrigin(component), "security-severity": nativeSeverityToNumber(policyInfo["severity"].lower()), "tags": addTags(policyInfo["name"])},
+                                    "properties": {"category":checkOrigin(component), "security-severity": nativeSeverityToNumber(policyInfo["severity"].lower()), "tags": addTags(None, policyInfo["name"])},
                                     "defaultConfiguration":{"level":nativeSeverityToLevel(policyInfo['severity'].lower())}}
                                 rules.append(rule)
                                 ruleIds.append(ruleId)
@@ -100,8 +99,51 @@ def addFindings():
                             results.append(result)
     return results, rules
 
-def addTags(cve):
+def getHelpMarkdown(vulnerability):
+    vector = vulnerability["cvss3"]["vector"]
+    attackVector = vulnerability["cvss3"]["attackVector"]
+    attackComplexity = vulnerability["cvss3"]["attackComplexity"]
+    confidentialityImpact = vulnerability["cvss3"]["confidentialityImpact"]
+    integrityImpact = vulnerability["cvss3"]["integrityImpact"]
+    availabilityImpact = vulnerability["cvss3"]["availabilityImpact"]
+    privilegesRequired = vulnerability["cvss3"]["privilegesRequired"]
+    scope = vulnerability["cvss3"]["scope"]
+    userInteraction = vulnerability["cvss3"]["userInteraction"]
+    bdsa_link = ""
+    if vulnerability["source"] == "BDSA":
+        bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) \| '
+    elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
+        bdsa_link = f'[View BDSA record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")}) \| '
+    cve_link = ""
+    if vulnerability["source"] == "NVD":
+        cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
+    elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "NVD":
+        cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")})'
+    messageText = f'\
+        | Description | \n\
+        | :----------- | \n\
+        | {vulnerability["description"] if vulnerability["description"] else "-"} |\n| {bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""} |\n\n\
+        ## Base Score Metrics (CVSS v3.x Metrics)\n\
+        |  |  |  |  |\n\
+        | :-- | :-- | :-- | :-- |\n\
+        | Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n\
+        | Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n\
+        | Integrity | **{integrityImpact}** | Scope | **{scope}** |\n\
+        | Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n\
+        {vector}'
+    return messageText
+
+
+def addTags(vulnerability, policy_name):
     tags = []
+    if vulnerability:
+        cwes = []
+        for metadata in vulnerability['_meta']['links']:
+            if metadata['rel'] == "cwes":
+                cwes.append("external/cwe/" + metadata["href"].split("/")[-1])
+        tags.extend(cwes)
+    elif policy_name:
+        tags.append(policy_name)
     tags.append("security")
     return tags
 
