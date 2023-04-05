@@ -132,7 +132,7 @@ def getHelpMarkdown(vulnerability):
         messageText += "\n\n## References\n"
         for metadata in vulnerability['_meta']['links']:
             if metadata['rel'] == "cwes":
-                cwe = metadata["href"].split("/")[-1].lower()
+                cwe = metadata["href"].split("/")[-1]
                 messageText += f'* Common Weakness Enumeration: [{cwe}](https://cwe.mitre.org/data/definitions/{cwe.split("-")[-1]}.html)\n'
     return messageText
 
