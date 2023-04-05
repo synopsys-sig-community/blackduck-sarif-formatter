@@ -41,5 +41,6 @@ runs:
   steps:
     # Run the Python script
     - run: |
+        pip3 install blackduck requests
         python3 ${{github.action_path}}/blackduckResultsToSarif.py --policies=${{inputs.policies}} --outputFile=${{inputs.outputFile}} --url=${{inputs.url}} --token=${{inputs.token}}  --project=${{inputs.project}} --version=${{inputs.version}} --policyCategories=${{inputs.policy_categories}} --log_level=${{inputs.log_level}} --url=${{inputs.url}}
       shell: bash
