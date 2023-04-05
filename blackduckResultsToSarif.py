@@ -67,7 +67,7 @@ def addFindings():
                         rules.append(rule)
                         ruleIds.append(ruleId)
                     ## Adding results for vulnerabilities
-                    result['message'] = f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'
+                    result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
                     result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:///" + checkOrigin(component)}}}]
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
