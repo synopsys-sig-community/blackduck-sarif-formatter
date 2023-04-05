@@ -108,15 +108,15 @@ def getHelpMarkdown(vulnerability):
         cvss_version = "cvss3"
     else:
         cvss_version = "cvss2"
-    vector = f'{vulnerability[cvss_version]["vector"] if "vector" in vulnerability else ""}'
-    attackVector = f'{vulnerability[cvss_version]["attackVector"] if "attackVector" in vulnerability else ""}'
-    attackComplexity = f'{vulnerability[cvss_version]["attackComplexity"] if "attackComplexity" in vulnerability else ""}'
-    confidentialityImpact = f'{vulnerability[cvss_version]["confidentialityImpact"] if "confidentialityImpact" in vulnerability else ""}'
-    integrityImpact = f'{vulnerability[cvss_version]["integrityImpact"] if "integrityImpact" in vulnerability else ""}'
-    availabilityImpact = f'{vulnerability[cvss_version]["availabilityImpact"] if "availabilityImpact" in vulnerability else ""}'
-    privilegesRequired = f'{vulnerability[cvss_version]["privilegesRequired"] if "privilegesRequired" in vulnerability else ""}'
-    scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability else ""}'
-    userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability else ""}'
+    vector = f'{vulnerability[cvss_version]["vector"] if "vector" in vulnerability[cvss_version] else ""}'
+    attackVector = f'{vulnerability[cvss_version]["attackVector"] if "attackVector" in vulnerability[cvss_version] else ""}'
+    attackComplexity = f'{vulnerability[cvss_version]["attackComplexity"] if "attackComplexity" in vulnerability[cvss_version] else ""}'
+    confidentialityImpact = f'{vulnerability[cvss_version]["confidentialityImpact"] if "confidentialityImpact" in vulnerability[cvss_version] else ""}'
+    integrityImpact = f'{vulnerability[cvss_version]["integrityImpact"] if "integrityImpact" in vulnerability[cvss_version] else ""}'
+    availabilityImpact = f'{vulnerability[cvss_version]["availabilityImpact"] if "availabilityImpact" in vulnerability[cvss_version] else ""}'
+    privilegesRequired = f'{vulnerability[cvss_version]["privilegesRequired"] if "privilegesRequired" in vulnerability[cvss_version] else ""}'
+    scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability[cvss_version] else ""}'
+    userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability[cvss_version] else ""}'
     bdsa_link = ""
     if vulnerability["source"] == "BDSA":
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) \| '
