@@ -9,6 +9,7 @@ import hashlib
 from blackduck.HubRestApi import HubInstance
 from timeit import default_timer as timer
 import requests
+from datetime import datetime
 
 __author__ = "Jouni Lehto"
 __versionro__="0.1.6"
@@ -69,7 +70,7 @@ def addFindings():
                     ## Adding results for vulnerabilities
                     result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
-                    result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:///" + checkOrigin(component)}}}]
+                    result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:////" + checkOrigin(component)}}}]
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
             if args.policies:
@@ -94,7 +95,7 @@ def addFindings():
                             bdLink = f'[See in Black Duck]({component["component"]})'
                             result['message'] = {"text":f'{policyInfo["name"]}: {policyInfo["category"]}\n\n{bdLink}'}
                             result['ruleId'] = ruleId
-                            result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:///" + checkOrigin(component)}}}]
+                            result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:////" + checkOrigin(component)}}}]
                             result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policyInfo["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                             results.append(result)
     return results, rules
@@ -118,6 +119,7 @@ def getHelpMarkdown(vulnerability):
     scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability[cvss_version] else ""}'
     userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability[cvss_version] else ""}'
     bdsa_link = ""
+    messageText = ""
     if vulnerability["source"] == "BDSA":
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) \| '
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
@@ -127,7 +129,14 @@ def getHelpMarkdown(vulnerability):
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "NVD":
         cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")})'
-    messageText = f'\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|  |  |  |  |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+
+    messageText += f'**{vulnerability["source"]}** {vulnerability["_meta"]["href"].split("/")[-1]}'
+    related_vuln = getLinksparam(vulnerability, "related-vulnerabilities", "label")
+    if related_vuln:
+        messageText += f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
+
+    messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+    messageText += f'\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}'
     if vulnerability:
         messageText += "\n\n## References\n"
         for metadata in vulnerability['_meta']['links']:
@@ -136,6 +145,13 @@ def getHelpMarkdown(vulnerability):
                 messageText += f'* Common Weakness Enumeration: [{cwe}](https://cwe.mitre.org/data/definitions/{cwe.split("-")[-1]}.html)\n'
     return messageText
 
+def getDate(vulnerability, whichDate):
+    datetime_to_modify = None
+    if whichDate in vulnerability and vulnerability[whichDate]:
+       datetime_to_modify = datetime.strptime(vulnerability[whichDate], "%Y-%m-%dT%H:%M:%S.%fZ")
+    if datetime_to_modify:
+        return datetime.strftime(datetime_to_modify, "%B %d, %Y")
+    return ""
 
 def addTags(vulnerability, policy_name):
     tags = []
