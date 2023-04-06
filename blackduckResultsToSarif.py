@@ -118,6 +118,7 @@ def getHelpMarkdown(vulnerability):
     privilegesRequired = f'{vulnerability[cvss_version]["privilegesRequired"] if "privilegesRequired" in vulnerability[cvss_version] else ""}'
     scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability[cvss_version] else ""}'
     userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability[cvss_version] else ""}'
+    
     bdsa_link = ""
     messageText = ""
     if vulnerability["source"] == "BDSA":
@@ -163,6 +164,15 @@ def addTags(vulnerability, policy_name):
         tags.extend(cwes)
     elif policy_name:
         tags.append(policy_name)
+    cvss_version = ""
+    if "cvss3" in vulnerability:
+        cvss_version = "cvss3"
+    else:
+        cvss_version = "cvss2"
+    if "temporalMetrics" in vulnerability[cvss_version]:
+        logging.debug(vulnerability[cvss_version]['temporalMetrics']['remediationLevel'])
+        if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
+            tags.append("Patch available")
     tags.append("security")
     return tags
 
