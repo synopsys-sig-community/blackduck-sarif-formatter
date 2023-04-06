@@ -170,7 +170,6 @@ def addTags(vulnerability, policy_name):
     else:
         cvss_version = "cvss2"
     if "temporalMetrics" in vulnerability[cvss_version]:
-        logging.debug(vulnerability[cvss_version]['temporalMetrics']['remediationLevel'])
         if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
             tags.append("Patch available")
     tags.append("security")
