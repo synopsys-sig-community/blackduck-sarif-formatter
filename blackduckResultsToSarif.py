@@ -171,7 +171,7 @@ def addTags(vulnerability, policy_name):
         cvss_version = "cvss2"
     if "temporalMetrics" in vulnerability[cvss_version]:
         if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
-            tags.append("Patch available")
+            tags.append("patch")
     tags.append("security")
     return tags
 
