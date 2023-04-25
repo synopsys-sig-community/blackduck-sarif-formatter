@@ -123,7 +123,7 @@ def getHelpMarkdown(component, vulnerability):
                 intents += "    "
 
     messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}'
-    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nFixed on {getDate(vulnerability,"vendorFixDate")}'
+    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nVendor Fix {getDate(vulnerability,"vendorFixDate")}'
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
     messageText += f'\nVulnerability Age {timeAfter.days} Days.'    
     messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
