@@ -19,20 +19,16 @@ args = ""
 MAX_LIMIT=1000
 
 def get_rapid_scan_results():
-    logging.debug("running rapid scan results")
     hub = HubInstance(args.url, api_token=args.token, insecure=False)
-    # Parse the Rapid Scan output, assuming there is only one run in the directory
     filelist = glob.glob(args.scanOutputPath + "/*.json")
-    logging.debug(filelist)
     if len(filelist) <= 0:
         return None
     bd_rapid_output_file_glob = max(filelist, key=os.path.getmtime)
     if len(bd_rapid_output_file_glob) == 0:
-        print("BD-Scan-Action: ERROR: Unable to find output scan files in: " + args.scanOutputPath + "/runs/*/scan/*.json")
+        logging.error("BD-Scan-Action: ERROR: Unable to find output scan files in: " + args.scanOutputPath + "/*.json")
         return None
 
     bd_rapid_output_file = bd_rapid_output_file_glob
-    # print("INFO: Parsing Black Duck Rapid Scan output from " + bd_rapid_output_file)
     with open(bd_rapid_output_file) as f:
         output_data = json.load(f)
 
@@ -41,15 +37,12 @@ def get_rapid_scan_results():
 
     developer_scan_url = output_data[0]['_meta']['href']
     logging.debug("DEBUG: Developer scan href: " + developer_scan_url)
-
-    # Handle limited lifetime of developer runs gracefully
     try:
         rapid_scan_results = get_json(hub, developer_scan_url)
     except Exception as e:
         logging.exception(e)
         logging.error(
-            f"BD-Scan-Action: ERROR: Unable to fetch developer scan '{developer_scan_url}' \
-                - note that these are limited lifetime and this process must run immediately following the rapid scan")
+            f"BD-Scan-Action: ERROR: Unable to fetch developer scan '{developer_scan_url}' - note that these are limited lifetime and this process must run immediately following the rapid scan")
         raise
     return rapid_scan_results
 
