@@ -123,8 +123,8 @@ def getHelpMarkdown(component, vulnerability):
                 intents += "    "
 
     messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}'
-    messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "-"}'
-    messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "-"}'
+    messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
     if "shortTermUpgradeGuidance" in component or "longTermUpgradeGuidance" in component:
         messageText += "\n\n## Upgrade guidance\n"
         if "shortTermUpgradeGuidance" in component:
@@ -213,8 +213,8 @@ def getSarifJsonHeader():
 def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
-def writeToFile(findingsInSarif):
-    f = open(args.outputFile, "w")
+def writeToFile(findingsInSarif, outputFile):
+    f = open(outputFile, "w")
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         runs.append(results)
         sarif_json['runs'] = runs
         if args.outputFile:
-            writeToFile(sarif_json)
+            writeToFile(sarif_json, args.outputFile)
         else:
             print(json.dumps(sarif_json, indent=3))
         end = timer()
