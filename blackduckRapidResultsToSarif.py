@@ -123,6 +123,9 @@ def getHelpMarkdown(component, vulnerability):
                 intents += "    "
 
     messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}'
+    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nFixed on {getDate(vulnerability,"vendorFixDate")}'
+    timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
+    messageText += f'\nVulnerability Age {timeAfter.days} Days.'    
     messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
     if "shortTermUpgradeGuidance" in component or "longTermUpgradeGuidance" in component:
@@ -139,9 +142,6 @@ def getHelpMarkdown(component, vulnerability):
                 messageText += f'**Policy name:**\t{policy["policyName"] if "policyName" in policy else "-"}\n'
                 messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
                 messageText += f'**Policy severity:**\t{policy["policySeverity"] if "policySeverity" in policy else "-"}\n\n'
-    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nFixed on {getDate(vulnerability,"vendorFixDate")}'
-    timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
-    messageText += f'\nVulnerability Age {timeAfter.days} Days.'    
 
     if vulnerability:
         messageText += "\n\n## References\n"
