@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 # This script will collect all vulnerabilites and licenses which have a policy violation.
-import glob
 import json
 import logging
 import argparse
 import re
-import os
 import sys
 import hashlib
 from blackduck.HubRestApi import HubInstance
 from timeit import default_timer as timer
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 
 __author__ = "Jouni Lehto"
 __versionro__="0.1.6"
