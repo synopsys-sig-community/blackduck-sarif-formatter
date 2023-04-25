@@ -58,5 +58,5 @@ runs:
     - if: ${{inputs.blackduck_scan_full == 'false'}}
       run: |
         pip3 install blackduck
-        python3 ${{github.action_path}}/blackduckRapidResultsToSarif.py --scanOutputPath=${{inputs.blackduck_scanOutputPath}} --policies=${{inputs.blackduck_policies}} --outputFile=${{inputs.blackduck_outputFile}} --url=${{inputs.blackduck}} --token=${{inputs.blackduck_apiToken}}  --log_level=${{inputs.blackduck_log_level}}
+        python3 ${{github.action_path}}/blackduckRapidResultsToSarif.py --scanOutputPath=${{inputs.blackduck_scanOutputPath}} --policies=${{inputs.blackduck_policies}} --outputFile=${{inputs.blackduck_outputFile}} --url=${{inputs.blackduck_url}} --token=${{inputs.blackduck_apiToken}}  --log_level=${{inputs.blackduck_log_level}}
       shell: bash
