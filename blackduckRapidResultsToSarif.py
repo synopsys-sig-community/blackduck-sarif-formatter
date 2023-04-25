@@ -54,16 +54,16 @@ def get_rapid_scan_results():
     return rapid_scan_results
 
 def get_json(hub, url):
-    url += '?limit=1000'
+    url += f'?limit={MAX_LIMIT}'
     result = hub.execute_get(url).json()
     all_data = result
     total = result['totalCount']
-    downloaded = 1000
+    downloaded = MAX_LIMIT
     while total > downloaded:
         req_url = f"{url}&offset={downloaded}"
         result = hub.execute_get(req_url).json()
         all_data['items'] = all_data['items'] + result['items']
-        downloaded += 1000
+        downloaded += MAX_LIMIT
 
     return all_data
 
