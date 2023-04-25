@@ -103,9 +103,12 @@ def getHelpMarkdown(component, vulnerability):
     if vulnerability["name"].startswith("CVE"):
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]}) \| '
     elif vulnerability["name"].startswith("BDSA"):
-        cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerability", "href")}) \| '
+        cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerability", "href")})'
 
-    messageText += f'**{vulnerability["name"].split("-")[0]}** {vulnerability["name"]}'
+    if vulnerability["name"].startswith("BDSA"):
+        messageText += f'**BDSA** {vulnerability["name"]}'
+    else:
+        messageText += f'**NVD** {vulnerability["name"]}'
     related_vuln = getLinksparam(vulnerability, "related-vulnerability", "href")
     if related_vuln:
         messageText += f' ({related_vuln.split("/")[-1]})'
@@ -114,12 +117,12 @@ def getHelpMarkdown(component, vulnerability):
     if "dependencyTrees" in component:
         messageText += "\n\n## Dependency tree\n"
         for dependencies in component["dependencyTrees"]:
-            intent = 1
+            intent = 0
             for dependency in dependencies:
                 intents = ""
                 for i in range(1, intent):
-                    intents += "\t"
-                messageText += f'{intents}{dependency}\n'
+                    intents += " "
+                messageText += f'{intents}* {dependency}\n'
                 intent += 1
 
     messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}'
@@ -214,7 +217,6 @@ def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
 def writeToFile(findingsInSarif):
-    logging.debug("Writing the file...")
     f = open(args.outputFile, "w")
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
