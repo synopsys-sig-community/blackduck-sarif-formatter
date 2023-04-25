@@ -57,6 +57,15 @@ def addFindings():
     if version:
         components = get_version_components(hub, version)['items']
         for component in components:
+            policies = []
+            if args.policies:
+                policy_status = getLinksData(hub, component, "policy-status")
+                if policy_status:
+                    policy_rules = getPolicyRules(hub, policy_status)
+                    if policy_rules:
+                        for policy in policy_rules:
+                            if policy["category"] in "SECURITY": #lets print out only SECURITY types
+                                policies.append(policy)
             component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
             # Only Security type of policies have vulnerabilities, it might be that there is a 
             # license policy violation and that component doesn't have vulnerabilities
@@ -69,7 +78,7 @@ def addFindings():
                     if not ruleId in ruleIds:
                         rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
                             "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(hub, component, vulnerability)},
+                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability)},
                             "properties": {"category": checkOrigin(component), "security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
                             "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
                         rules.append(rule)
@@ -85,7 +94,7 @@ def addFindings():
 def getSeverityScore(vulnerability):
     return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
 
-def getHelpMarkdown(hub, component, vulnerability):
+def getHelpMarkdown(policies, vulnerability):
     cvss_version = ""
     if "cvss3" in vulnerability:
         cvss_version = "cvss3"
@@ -124,18 +133,11 @@ def getHelpMarkdown(hub, component, vulnerability):
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
     messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
 
-    if args.policies:
-        policy_status = getLinksData(hub, component, "policy-status")
-        if policy_status:
-            policy_rules = getPolicyRules(hub, policy_status)
-            if policy_rules:
-                policyCategories = args.policyCategories.split(',')
-                messageText += "\n\n## Policy violations\n"
-                for policy in policy_rules:
-                    if policy["category"] in policyCategories:
-                        messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
-                        messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
-                        messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
+    if policies:
+        for policy in policies:
+            messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
+            messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
+            messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
   
     if vulnerability:
         messageText += "\n\n## References\n"
