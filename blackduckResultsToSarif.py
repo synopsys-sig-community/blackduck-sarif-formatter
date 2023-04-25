@@ -167,16 +167,16 @@ def addTags(vulnerability, policy_name):
             if metadata['rel'] == "cwes":
                 cwes.append("external/cwe/" + metadata["href"].split("/")[-1].lower())
         tags.extend(cwes)
+        cvss_version = ""
+        if "cvss3" in vulnerability:
+            cvss_version = "cvss3"
+        else:
+            cvss_version = "cvss2"
+        if "temporalMetrics" in vulnerability[cvss_version]:
+            if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
+                tags.append("official_fix")
     elif policy_name:
         tags.append(policy_name)
-    cvss_version = ""
-    if "cvss3" in vulnerability:
-        cvss_version = "cvss3"
-    else:
-        cvss_version = "cvss2"
-    if "temporalMetrics" in vulnerability[cvss_version]:
-        if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
-            tags.append("official_fix")
     tags.append("security")
     return tags
 
