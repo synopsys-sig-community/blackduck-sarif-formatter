@@ -55,8 +55,6 @@ def addFindings():
             # license policy violation and that component doesn't have vulnerabilities
             ruleId = ""
             if len(component_vulnerabilities) > 0:
-                # writeToFile(component, args.outputFile+".debug")
-                # exit(-1)
                 for vulnerability in component_vulnerabilities:
                     rule, result = {}, {}
                     ruleId = vulnerability["name"]
@@ -123,7 +121,8 @@ def getHelpMarkdown(hub, component, vulnerability):
         policy_rules = getLinksData(hub, component, "policy-rules")
         if policy_rules:
             messageText += "\n\n## Policy violations\n"
-            for policy in policy_rules:
+            for policy in policy_rules["items"]:
+                logging.debug(policy)
                 messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
                 messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
                 messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
