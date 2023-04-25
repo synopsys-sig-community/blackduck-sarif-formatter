@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 # This script will collect all vulnerabilites and licenses which have a policy violation.
+import glob
 import json
 import logging
 import argparse
 import re
+import os
 import sys
 import hashlib
 from blackduck.HubRestApi import HubInstance
@@ -219,6 +221,7 @@ def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
 def writeToFile(findingsInSarif):
+    logging.debug("Writing the file...")
     f = open(args.outputFile, "w")
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
@@ -243,7 +246,7 @@ if __name__ == '__main__':
         parser.add_argument('--log_level', help="Will print more info... default=INFO", default="INFO")
         parser.add_argument('--policyCategories', help="Comma separated list of policy categories, which violations will affect. \
             Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY,LICENSE\"", default="SECURITY,LICENSE")
-        parser.add_argument('--policies', help="If given, policy information is added", default=False, type=str2bool)
+        parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"
