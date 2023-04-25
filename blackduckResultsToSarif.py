@@ -55,6 +55,8 @@ def addFindings():
             # license policy violation and that component doesn't have vulnerabilities
             ruleId = ""
             if len(component_vulnerabilities) > 0:
+                # writeToFile(component, args.outputFile+".debug")
+                # exit(-1)
                 for vulnerability in component_vulnerabilities:
                     rule, result = {}, {}
                     ruleId = vulnerability["name"]
@@ -62,8 +64,8 @@ def addFindings():
                     if not ruleId in ruleIds:
                         rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
                             "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(vulnerability)},
-                            "properties": {"category": checkOrigin(component), "security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, None)},
+                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(hub, component, vulnerability)},
+                            "properties": {"category": checkOrigin(component), "security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
                             "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
                         rules.append(rule)
                         ruleIds.append(ruleId)
@@ -73,37 +75,12 @@ def addFindings():
                     result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:////" + checkOrigin(component)}}}]
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
-            if args.policies:
-                component_policyStatuses = getLinksData(hub, component, "policy-status")
-                if component_policyStatuses:
-                    for component_policyStatus in component_policyStatuses['_meta']['links']:
-                        policyInfo = hub.execute_get(f'{component_policyStatus["href"]}?limit={MAX_LIMIT}').json()
-                        categories = re.sub(r"[\n\t\s]*", "", args.policyCategories)
-                        if policyInfo["category"].lower() in categories.lower().split(','):
-                            rule, result = {}, {}
-                            ruleId = policyInfo["name"]
-                            ## Adding policy as a rule
-                            if not ruleId in ruleIds:
-                                rule = {"id":ruleId, "helpUri": policyInfo['_meta']['href'], "shortDescription":{"text":f'{policyInfo["description"] if "description" in policyInfo else "-"}'}, 
-                                    "fullDescription":{"text":f'{policyInfo["description"][:1000] if "description" in policyInfo else policyInfo["name"]}', "markdown":f'{policyInfo["description"][:1000] if "description" in policyInfo else policyInfo["name"]}'},
-                                    "help":{"text":f'{policyInfo["description"] if "description" in policyInfo else policyInfo["name"]}', "markdown":f'{policyInfo["description"] if "description" in policyInfo else policyInfo["name"]}'},
-                                    "properties": {"category":checkOrigin(component), "security-severity": nativeSeverityToNumber(policyInfo["severity"].lower()), "tags": addTags(None, policyInfo["name"])},
-                                    "defaultConfiguration":{"level":nativeSeverityToLevel(policyInfo['severity'].lower())}}
-                                rules.append(rule)
-                                ruleIds.append(ruleId)
-                            ## Adding results for policies
-                            bdLink = f'[See in Black Duck]({component["component"]})'
-                            result['message'] = {"text":f'{policyInfo["name"]}: {policyInfo["category"]}\n\n{bdLink}'}
-                            result['ruleId'] = ruleId
-                            result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:////" + checkOrigin(component)}}}]
-                            result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policyInfo["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
-                            results.append(result)
     return results, rules
 
 def getSeverityScore(vulnerability):
     return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
 
-def getHelpMarkdown(vulnerability):
+def getHelpMarkdown(hub, component, vulnerability):
     cvss_version = ""
     if "cvss3" in vulnerability:
         cvss_version = "cvss3"
@@ -140,9 +117,17 @@ def getHelpMarkdown(vulnerability):
     messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
     messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}'
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
-    messageText += f'\nVulnerability Age {timeAfter.days} Days.'    
+    messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
 
-
+    if args.policies:
+        policy_rules = getLinksData(hub, component, "policy-rules")
+        if policy_rules:
+            messageText += "\n\n## Policy violations\n"
+            for policy in policy_rules:
+                messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
+                messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
+                messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
+  
     if vulnerability:
         messageText += "\n\n## References\n"
         for metadata in vulnerability['_meta']['links']:
@@ -159,7 +144,7 @@ def getDate(vulnerability, whichDate):
         return datetime.strftime(datetime_to_modify, "%B %d, %Y")
     return ""
 
-def addTags(vulnerability, policy_name):
+def addTags(vulnerability):
     tags = []
     if vulnerability:
         cwes = []
@@ -175,8 +160,6 @@ def addTags(vulnerability, policy_name):
         if "temporalMetrics" in vulnerability[cvss_version]:
             if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
                 tags.append("official_fix")
-    elif policy_name:
-        tags.append(policy_name)
     tags.append("security")
     return tags
 
@@ -218,9 +201,8 @@ def getSarifJsonHeader():
 def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
-def writeToFile(findingsInSarif):
-    logging.debug("Writing the file...")
-    f = open(args.outputFile, "w")
+def writeToFile(findingsInSarif, outputFile):
+    f = open(outputFile, "w")
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
 
@@ -263,7 +245,7 @@ if __name__ == '__main__':
         runs.append(results)
         sarif_json['runs'] = runs
         if args.outputFile:
-            writeToFile(sarif_json)
+            writeToFile(sarif_json, args.outputFile)
         else:
             print(json.dumps(sarif_json, indent=3))
         end = timer()
