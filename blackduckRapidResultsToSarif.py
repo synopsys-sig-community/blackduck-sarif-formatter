@@ -101,7 +101,7 @@ def getHelpMarkdown(component, vulnerability):
 
     cve_link = ""
     if vulnerability["name"].startswith("CVE"):
-        cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]}) \| '
+        cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
     elif vulnerability["name"].startswith("BDSA"):
         cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerability", "href")})'
 
@@ -117,13 +117,10 @@ def getHelpMarkdown(component, vulnerability):
     if "dependencyTrees" in component:
         messageText += "\n\n## Dependency tree\n"
         for dependencies in component["dependencyTrees"]:
-            intent = 0
+            intents = ""
             for dependency in dependencies:
-                intents = ""
-                for i in range(1, intent):
-                    intents += " "
                 messageText += f'{intents}* {dependency}\n'
-                intent += 1
+                intents += "    "
 
     messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}'
     messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "-"}'
