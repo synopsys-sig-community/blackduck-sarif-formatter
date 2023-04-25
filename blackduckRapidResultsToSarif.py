@@ -250,7 +250,7 @@ if __name__ == '__main__':
         sarif_json = getSarifJsonHeader()
         results = {}
         results['results'] = findings
-        results['tool'] = getSarifJsonFooter("Synopsys Black Duck", rules)
+        results['tool'] = getSarifJsonFooter("Synopsys Black Duck Rapid", rules)
         runs = []
         runs.append(results)
         sarif_json['runs'] = runs
