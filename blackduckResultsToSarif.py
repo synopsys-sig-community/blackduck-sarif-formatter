@@ -42,6 +42,13 @@ def getLinksparam(data, relName, param):
         if metadata['rel'] == relName:
             return metadata[param]
 
+def getPolicyRules(hub, data):
+    policies = []
+    for metadata in data['_meta']['links']:
+        if metadata['rel'] == "policy-rule":
+            policies.append(hub.execute_get(f'{metadata["href"]}?limit={MAX_LIMIT}').json())
+    return policies
+
 def addFindings():
     global args
     rules, results, ruleIds = [], [], []
@@ -71,7 +78,7 @@ def addFindings():
                     result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
                     result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:////" + checkOrigin(component)}}}]
-                    result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                    result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_full').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
     return results, rules
 
@@ -118,13 +125,15 @@ def getHelpMarkdown(hub, component, vulnerability):
     messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
 
     if args.policies:
-        policy_rules = getLinksData(hub, component, "policy-rules")
-        if policy_rules:
-            messageText += "\n\n## Policy violations\n"
-            for policy in policy_rules["items"]:
-                messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
-                messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
-                messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
+        policy_status = getLinksData(hub, component, "policy-status")
+        if policy_status:
+            policy_rules = getPolicyRules(hub, policy_status)
+            if policy_rules:
+                messageText += "\n\n## Policy violations\n"
+                for policy in policy_rules:
+                    messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
+                    messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
+                    messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
   
     if vulnerability:
         messageText += "\n\n## References\n"
