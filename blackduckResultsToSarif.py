@@ -129,11 +129,13 @@ def getHelpMarkdown(hub, component, vulnerability):
         if policy_status:
             policy_rules = getPolicyRules(hub, policy_status)
             if policy_rules:
+                policyCategories = args.policyCategories.split(',')
                 messageText += "\n\n## Policy violations\n"
                 for policy in policy_rules:
-                    messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
-                    messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
-                    messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
+                    if policy["category"] in policyCategories:
+                        messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
+                        messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
+                        messageText += f'**Policy severity:**\t{policy["severity"] if "severity" in policy else "-"}\n\n'
   
     if vulnerability:
         messageText += "\n\n## References\n"
