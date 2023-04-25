@@ -5,7 +5,7 @@ branding:
   icon: code
   color: blue
 inputs:
-  blackduck_blackduck_log_level:
+  blackduck_log_level:
     description: Logging level
     default: DEBUG
     required: false
