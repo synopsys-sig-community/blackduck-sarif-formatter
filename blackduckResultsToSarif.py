@@ -134,6 +134,7 @@ def getHelpMarkdown(policies, vulnerability):
     messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
 
     if policies:
+        messageText += "\n\n## Policy violations\n"
         for policy in policies:
             messageText += f'**Policy name:**\t{policy["name"] if "name" in policy else "-"}\n'
             messageText += f'**Policy description:**\t{policy["description"] if "description" in policy else "-"}\n'
