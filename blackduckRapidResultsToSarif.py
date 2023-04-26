@@ -28,7 +28,6 @@ def find_file_dependency_file(dependency):
             logging.debug(f'found {dependencyFile} from {dirpath}')
             lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
             if lineNumber:
-                logging.debug(re.search(re.escape(os.getcwd()), dirpath).end())
                 filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
                 if filepath == "":
                     logging.debug(f'dependency {dependency} found from {filepath}{dependencyFile} at line {lineNumber}')
@@ -109,7 +108,6 @@ def addFindings():
                 result['ruleId'] = ruleId
                 dependencies = []
                 for dependencies in component["dependencyTrees"]:
-                    logging.debug(dependencies)
                     dependencies = dependencies
                 fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
                 result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri":fileWithPath},"region":{"startLine":f'{int(lineNumber) if lineNumber and not lineNumber == "" else 1}'}}}]
