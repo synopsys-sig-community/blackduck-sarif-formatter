@@ -5,6 +5,7 @@ import json
 import logging
 import argparse
 import os
+import re
 import sys
 import hashlib
 from blackduck.HubRestApi import HubInstance
@@ -17,6 +18,30 @@ __versionro__="0.1.0"
 #Global variables
 args = "" 
 MAX_LIMIT=1000
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json"]
+
+def find_file_dependency_file(dependency):
+    logging.debug(f"Searching {dependency} from {os.getcwd()}")
+    for dirpath, dirnames, filenames in os.walk(os.getcwd(), True):
+        dependencyFiles = set(filenames).intersection(set(supportedPackageManagerFiles))
+        for dependencyFile in dependencyFiles:
+            logging.debug(f'found {dependencyFile} from {dirpath}')
+            lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
+            if lineNumber:
+                logging.debug(re.search(re.escape(os.getcwd()), dirpath).end())
+                filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
+                if filepath == "":
+                    logging.debug(f'dependency {dependency} found from {filepath}{dependencyFile} at line {lineNumber}')
+                    return dependencyFile, lineNumber
+                else:
+                    logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
+                    return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
+
+def checkDependencyLineNro(filename, dependency):
+    with open(filename) as dependencyFile:
+        for num, line in enumerate(dependencyFile, 1):
+            if dependency in line:
+                return num
 
 def get_rapid_scan_results():
     hub = HubInstance(args.url, api_token=args.token, insecure=False)
@@ -82,7 +107,12 @@ def addFindings():
                 ## Adding results for vulnerabilities
                 result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                 result['ruleId'] = ruleId
-                result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:////" + checkOrigin(component)}}}]
+                dependencies = []
+                for dependencies in component["dependencyTrees"]:
+                    logging.debug(dependencies)
+                    dependencies = dependencies
+                fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
+                result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri":fileWithPath},"region":{"startLine":f'{int(lineNumber) if lineNumber and not lineNumber == "" else 1}'}}}]
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_rapid').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
     return results, rules
@@ -245,6 +275,7 @@ if __name__ == '__main__':
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(module)s: %(message)s', stream=sys.stderr, level=log_level)
         #Printing out the version number
         logging.info("Black Duck rapid results to SARIF formatter version: " + __versionro__)
+
         if logging.getLogger().isEnabledFor(logging.DEBUG): logging.debug(f'Given params are: {args}')
         findings, rules = addFindings()
         sarif_json = getSarifJsonHeader()
