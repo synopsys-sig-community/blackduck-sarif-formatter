@@ -31,10 +31,10 @@ def find_file_dependency_file(dependency):
                 filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
                 if filepath == "":
                     logging.debug(f'dependency {dependency} found from {filepath}{dependencyFile} at line {lineNumber}')
-                    return dependencyFile, lineNumber
+                    return dependencyFile, int(lineNumber)
                 else:
                     logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
-                    return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
+                    return f'{filepath}{os.path.sep}{dependencyFile}', int(lineNumber)
 
 def checkDependencyLineNro(filename, dependency):
     with open(filename) as dependencyFile:
@@ -110,7 +110,10 @@ def addFindings():
                 for dependencies in component["dependencyTrees"]:
                     dependencies = dependencies
                 fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
-                result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri":fileWithPath},"region":{"startLine":f'{int(lineNumber) if lineNumber and not lineNumber == "" else 1}'}}}]
+                lineNro = 1
+                if lineNumber: 
+                    lineNro = int(lineNumber)
+                result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri":fileWithPath},"region":{"startLine":lineNro}}}]
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_rapid').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
     return results, rules
