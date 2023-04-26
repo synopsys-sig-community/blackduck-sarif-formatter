@@ -31,15 +31,15 @@ def find_file_dependency_file(dependency):
                 filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
                 if filepath == "":
                     logging.debug(f'dependency {dependency} found from {filepath}{dependencyFile} at line {lineNumber}')
-                    return dependencyFile, int(lineNumber)
+                    return dependencyFile, lineNumber
                 else:
                     logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
-                    return f'{filepath}{os.path.sep}{dependencyFile}', int(lineNumber)
+                    return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
 
 def checkDependencyLineNro(filename, dependency):
     with open(filename) as dependencyFile:
         for num, line in enumerate(dependencyFile, 1):
-            if dependency in line:
+            if re.search(rf'\b{dependency}\b', line):
                 return num
 
 def get_rapid_scan_results():
@@ -109,6 +109,7 @@ def addFindings():
                 dependencies = []
                 for dependencies in component["dependencyTrees"]:
                     dependencies = dependencies
+                logging.debug(dependencies)
                 fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
                 lineNro = 1
                 if lineNumber: 
