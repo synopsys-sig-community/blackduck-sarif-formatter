@@ -3,7 +3,9 @@ This action is used to create a Sarif -format report from Black Duck.
 
 ## Prerequisities
 This action expects that Black Duck scan is done before running this action.
+
 **Rapid scan results**
+
 When running Black Duck scan with RAPID mode and you need to run this action to get Sarif -format report, you need to remember tu use following parameters:
 * --detect.scan.output.path
 * --detect.cleanup=false
@@ -15,7 +17,7 @@ By setting the detect.cleanup to false, you will prevent Black Duck to remove th
 | Option name | Description | Default value | Required |
 |-------------|-------------|---------------|----------|
 | blackduck_log_level | Logging level | DEBUG | false |
-| blackduck_url | Black DuckURL| - | true |
+| blackduck_url | Black Duck URL| - | true |
 | blackduck_apiToken | Black Duck Access token | - | true |
 | blackduck_project | Black Duck project name | ${{github.repository}} | false |
 | blackduck_version | Black Duck project version name | ${{github.ref_name}} | false |
