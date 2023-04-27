@@ -2,7 +2,7 @@
 This action is used to create a Sarif -format report from Black Duck.
 
 ## Prerequisities
-This action expects that Black Duck scan is done before running this action.
+This action expects that Black Duck scan is done before running this action. You can use Synopsys official GitHub Action [Synopsys Action](https://github.com/marketplace/actions/synopsys-action)
 
 **Rapid scan results**
 
