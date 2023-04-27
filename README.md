@@ -23,7 +23,7 @@ By setting the detect.cleanup to false, you will prevent Black Duck to remove th
 | blackduck_outputFile | Filename with path where it will be created, example: github.workspace/blackduckFindings.sarif.json | ${{github.workspace}}/blackduckFindings.sarif.json | false
 | blackduck_policies | If given, policy information is added | false | false |
 | blackduck_scan_full | false for rapid scan results and true for intelligent scan | false | false |
-| blackduck_scanOutputPath | If blackduck_scan_full = true, then this is required. Rapid scan output folder. You must specify scan output folder with --detect.scan.output.path when running the Rapid scan with Black Duck and then give the same folder here, if you want to have rapid scan results as a sarif format report.| ${{github.repository}}/bd_scan | false |
+| blackduck_scanOutputPath | If blackduck_scan_full = false, then this is required. Rapid scan output folder. You must specify scan output folder with --detect.scan.output.path when running the Rapid scan with Black Duck and then give the same folder here, if you want to have rapid scan results as a sarif format report.| ${{github.repository}}/bd_scan | false |
 
 ## Usage examples
 Get Sarif format report from full Black Duck scan.

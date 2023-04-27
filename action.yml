@@ -36,11 +36,11 @@ inputs:
     default: "false"
     required: false
   blackduck_scan_full:
-    description: "true for rapid scan results and false for intelligent scan, default false"
+    description: "false for rapid scan results and true for intelligent scan, default false"
     default: "false"
     required: false
   blackduck_scanOutputPath:
-    description: "If blackduck_scan_full = true, then this is required. Rapid scan output folder. You must specify scan output folder with --detect.scan.output.path \
+    description: "If blackduck_scan_full = false, then this is required. Rapid scan output folder. You must specify scan output folder with --detect.scan.output.path \
             when running the Rapid scan with Black Duck and then give the same folder here, if you want to have rapid scan results as a sarif format report. \
             default is github.repository/bd_scan"
     default: ${{github.repository}}/bd_scan
