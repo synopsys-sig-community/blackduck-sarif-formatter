@@ -7,6 +7,7 @@ This action expects that Black Duck scan is done before running this action.
 When running Black Duck scan with RAPID mode and you need to run this action to get Sarif -format report, you need to remember tu use following parameters:
 * --detect.scan.output.path
 * --detect.cleanup=false
+
 With detect.scan.output.path you will set a output folder for RAPID scan results. Then you must give the same folder to this action with input param **blackduck_scanOutputPath** (see examle below). 
 By setting the detect.cleanup to false, you will prevent Black Duck to remove the result json -file after scan is done. This action will use that json -file.
 
