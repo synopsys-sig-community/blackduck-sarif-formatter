@@ -106,15 +106,16 @@ def addFindings():
                 ## Adding results for vulnerabilities
                 result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                 result['ruleId'] = ruleId
-                dependencies = []
+                locations = []
+                #There might be several transient dependencies
                 for dependencies in component["dependencyTrees"]:
-                    dependencies = dependencies
-                logging.debug(dependencies)
-                fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
-                lineNro = 1
-                if lineNumber: 
-                    lineNro = int(lineNumber)
-                result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri":fileWithPath},"region":{"startLine":lineNro}}}]
+                    logging.debug(dependencies)
+                    fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
+                    lineNro = 1
+                    if lineNumber: 
+                        lineNro = int(lineNumber)
+                    locations.append({"physicalLocation":{"artifactLocation":{"uri":fileWithPath},"region":{"startLine":lineNro}}})
+                result['locations'] = locations
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_rapid').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
     return results, rules

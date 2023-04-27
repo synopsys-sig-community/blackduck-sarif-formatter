@@ -24,9 +24,9 @@ inputs:
     required: false
     default: ${{github.ref_name}}
   blackduck_policy_categories:
-    description: "Comma separated list of policy categories, which violations will affect. Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=SECURITY,LICENSE"
+    description: "Comma separated list of policy categories, which violations will affect. Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=SECURITY"
     required: false
-    default: SECURITY,LICENSE #Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL]
+    default: SECURITY #Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL]
   blackduck_outputFile:
     description: "Filename with path where it will be created, example: github.workspace/blackduckFindings.sarif.json (default)"
     default: ${{github.workspace}}/blackduckFindings.sarif.json

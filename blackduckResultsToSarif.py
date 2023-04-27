@@ -237,7 +237,7 @@ if __name__ == '__main__':
                                                 if outputfile is not given, then json is printed stdout.", required=False)
         parser.add_argument('--log_level', help="Will print more info... default=INFO", default="INFO")
         parser.add_argument('--policyCategories', help="Comma separated list of policy categories, which violations will affect. \
-            Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY,LICENSE\"", default="SECURITY,LICENSE")
+            Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
         args = parser.parse_args()
         #Initializing the logger
