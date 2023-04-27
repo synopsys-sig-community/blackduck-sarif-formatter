@@ -32,7 +32,7 @@ Get Sarif format report from full Black Duck scan.
 ```yaml
        #------------Black Duck full------------------------#
     - name: Black Duck Analysis with synopsys-action
-      uses: synopsys-sig/synopsys-action@v1.1.0
+      uses: synopsys-sig/synopsys-action@v1.2.0
       with:
         blackduck_apiToken: ${{ secrets.blackduck_token }}
         blackduck_url: ${{ secrets.blackduck_url }}
@@ -77,7 +77,7 @@ Get Sarif format report from Rapid Black Duck scan.
 ```yaml
        #------------Black Duck Rapid------------------------#
     - name: Black Duck Analysis with synopsys-action
-      uses: synopsys-sig/synopsys-action@v1.1.0
+      uses: synopsys-sig/synopsys-action@v1.2.0
       with:
         blackduck_apiToken: ${{ secrets.blackduck_token }}
         blackduck_url: ${{ secrets.blackduck_url }}
