@@ -25,7 +25,6 @@ def find_file_dependency_file(dependency):
     for dirpath, dirnames, filenames in os.walk(os.getcwd(), True):
         dependencyFiles = set(filenames).intersection(set(supportedPackageManagerFiles))
         for dependencyFile in dependencyFiles:
-            logging.debug(f'found {dependencyFile} from {dirpath}')
             lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
             if lineNumber:
                 filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
@@ -45,44 +44,43 @@ def checkDependencyLineNro(filename, dependency):
 def get_rapid_scan_results():
     hub = HubInstance(args.url, api_token=args.token, insecure=False)
     filelist = glob.glob(args.scanOutputPath + "/*.json")
-    if len(filelist) <= 0:
-        return None
-    bd_rapid_output_file_glob = max(filelist, key=os.path.getmtime)
-    if len(bd_rapid_output_file_glob) == 0:
-        logging.error("BD-Scan-Action: ERROR: Unable to find output scan files in: " + args.scanOutputPath + "/*.json")
-        return None
+    if filelist:
+        if len(filelist) <= 0:
+            return None
+        bd_rapid_output_file_glob = max(filelist, key=os.path.getmtime)
+        if len(bd_rapid_output_file_glob) == 0:
+            logging.error("BD-Scan-Action: ERROR: Unable to find output scan files in: " + args.scanOutputPath + "/*.json")
+            return None
 
-    bd_rapid_output_file = bd_rapid_output_file_glob
-    with open(bd_rapid_output_file) as f:
-        output_data = json.load(f)
+        bd_rapid_output_file = bd_rapid_output_file_glob
+        with open(bd_rapid_output_file) as f:
+            output_data = json.load(f)
 
-    if len(output_data) <= 0 or '_meta' not in output_data[0] or 'href' not in output_data[0]['_meta']:
-        return None
+        if len(output_data) <= 0 or '_meta' not in output_data[0] or 'href' not in output_data[0]['_meta']:
+            return None
 
-    developer_scan_url = output_data[0]['_meta']['href']
-    logging.debug("DEBUG: Developer scan href: " + developer_scan_url)
-    try:
+        developer_scan_url = output_data[0]['_meta']['href']
+        logging.debug("DEBUG: Developer scan href: " + developer_scan_url)
         rapid_scan_results = get_json(hub, developer_scan_url)
-    except Exception as e:
-        logging.exception(e)
-        logging.error(
-            f"BD-Scan-Action: ERROR: Unable to fetch developer scan '{developer_scan_url}' - note that these are limited lifetime and this process must run immediately following the rapid scan")
-        raise
-    return rapid_scan_results
+        return rapid_scan_results
+    else:
+        raise Exception("Didn't find any RAPID scan result json files. Note, that you need to give --detect.cleanup=false, so that results are not removed after scan is done.")
 
 def get_json(hub, url):
     url += f'?limit={MAX_LIMIT}'
     result = hub.execute_get(url).json()
     all_data = result
-    total = result['totalCount']
-    downloaded = MAX_LIMIT
-    while total > downloaded:
-        req_url = f"{url}&offset={downloaded}"
-        result = hub.execute_get(req_url).json()
-        all_data['items'] = all_data['items'] + result['items']
-        downloaded += MAX_LIMIT
-
-    return all_data
+    if "totalCount" in result:
+        total = result['totalCount']
+        downloaded = MAX_LIMIT
+        while total > downloaded:
+            req_url = f"{url}&offset={downloaded}"
+            result = hub.execute_get(req_url).json()
+            all_data['items'] = all_data['items'] + result['items']
+            downloaded += MAX_LIMIT
+        return all_data
+    else:
+        raise Exception(f"BD-Scan-Action: ERROR: Unable to fetch developer scan '{url}' - note that these are limited lifetime and this process must run immediately following the rapid scan")
 
 def addFindings():
     global args
@@ -109,12 +107,11 @@ def addFindings():
                 locations = []
                 #There might be several transient dependencies
                 for dependencies in component["dependencyTrees"]:
-                    logging.debug(dependencies)
                     fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
                     lineNro = 1
                     if lineNumber: 
                         lineNro = int(lineNumber)
-                    locations.append({"physicalLocation":{"artifactLocation":{"uri":fileWithPath},"region":{"startLine":lineNro}}})
+                    locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["componentIdentifier"]}'},"region":{"startLine":lineNro}}})
                 result['locations'] = locations
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_rapid').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
