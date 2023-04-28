@@ -2,13 +2,17 @@
 This action is used to create a Sarif -format report from Black Duck.
 
 ## Prerequisities
-This action expects that Black Duck scan is done before running this action. You can use Synopsys official GitHub Action [Synopsys Action](https://github.com/marketplace/actions/synopsys-action)
+This action expects that Black Duck scan is done before running this action. You can use Synopsys official GitHub Action [Synopsys Action](https://github.com/marketplace/actions/synopsys-action) to run full or rapid scan.
 
 **Rapid scan results**
 
-When running Black Duck scan with RAPID mode and you need to run this action to get Sarif -format report, you need to remember tu use following parameters:
+When running Black Duck scan with RAPID mode and you need to run this action to get Sarif -format report, you need to remember to use following parameters:
 * --detect.scan.output.path
 * --detect.cleanup=false
+
+If you are using the Synopsys official synopsys-action to run the Black Duck analysis, you can set needed params (listed above) with following environment variable (see example below):
+* DETECT_SCAN_OUTPUT_PATH
+* DETECT_CLEANUP
 
 With detect.scan.output.path you will set a output folder for RAPID scan results. Then you must give the same folder to this action with input param **blackduck_scanOutputPath** (see examle below). 
 By setting the detect.cleanup to false, you will prevent Black Duck to remove the result json -file after scan is done. This action will use that json -file.
