@@ -118,4 +118,13 @@ Get Sarif format report from Rapid Black Duck scan.
       continue-on-error: true
 ```
 
+## Example pictures
 
+**Black Duck scan results on the list**
+![Black Duck scan results on the list.](/examples/BD_results_list.GIF)
+
+**Black Duck Rapid scan results**
+![Result from Black Duck Rapid scan.](/examples/BD_Rapid_result.GIF)
+
+**Black Duck Full scan results**
+![Result from Black Duck Full scan.](/examples/BD_full_result.GIF)
