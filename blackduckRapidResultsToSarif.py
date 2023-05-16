@@ -86,7 +86,7 @@ def addFindings():
     global args
     rules, results, ruleIds = [], [], []
     findings = get_rapid_scan_results()
-    if len(findings) > 0:
+    if findings and len(findings) > 0:
         components = findings["items"]
         for component in components:
             for vulnerability in component["policyViolationVulnerabilities"]:

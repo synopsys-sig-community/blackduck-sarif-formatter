@@ -3,7 +3,6 @@
 import json
 import logging
 import argparse
-import re
 import sys
 import hashlib
 from blackduck.HubRestApi import HubInstance
@@ -64,13 +63,11 @@ def addFindings():
                     policy_rules = getPolicyRules(hub, policy_status)
                     if policy_rules:
                         for policy in policy_rules:
-                            if policy["category"] in "SECURITY": #lets print out only SECURITY types
+                            if policy["category"] in args.policyCategories.split(','): 
                                 policies.append(policy)
             component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
-            # Only Security type of policies have vulnerabilities, it might be that there is a 
-            # license policy violation and that component doesn't have vulnerabilities
             ruleId = ""
-            if len(component_vulnerabilities) > 0:
+            if component_vulnerabilities and len(component_vulnerabilities) > 0:
                 for vulnerability in component_vulnerabilities:
                     rule, result = {}, {}
                     ruleId = vulnerability["name"]
