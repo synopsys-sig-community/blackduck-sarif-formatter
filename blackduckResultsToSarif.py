@@ -11,7 +11,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.6"
+__versionro__="0.1.7"
 
 #Global variables
 args = "" 
@@ -249,7 +249,7 @@ if __name__ == '__main__':
         sarif_json = getSarifJsonHeader()
         results = {}
         results['results'] = findings
-        results['tool'] = getSarifJsonFooter("Synopsys Black Duck", rules)
+        results['tool'] = getSarifJsonFooter("Synopsys Black Duck Intelligent", rules)
         runs = []
         runs.append(results)
         sarif_json['runs'] = runs
