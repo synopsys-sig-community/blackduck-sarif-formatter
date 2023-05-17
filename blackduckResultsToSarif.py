@@ -136,7 +136,7 @@ def checkLocations(hub,component):
         lineNro = 1
         if lineNumber: 
             lineNro = int(lineNumber)
-        locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["origins"][0]["packageUrl"]}'},"region":{"startLine":lineNro}}})
+        locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["origins"][0]["packageUrl"].replace("pkg:","")}'},"region":{"startLine":lineNro}}})
     return locations
 
 def getSeverityScore(vulnerability):
