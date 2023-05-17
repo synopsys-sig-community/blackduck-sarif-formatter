@@ -167,8 +167,8 @@ def getHelpMarkdown(policies, vulnerability):
     cve_link = ""
     if vulnerability["source"] == "NVD":
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
-    elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "NVD":
-        cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")})'
+    elif getLinksparam(vulnerability, "related-vulnerability", "label") == "NVD":
+        cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerability", "href")})'
 
     messageText += f'**{vulnerability["source"]}** {vulnerability["_meta"]["href"].split("/")[-1]}'
     related_vuln = getLinksparam(vulnerability, "related-vulnerabilities", "label")
@@ -176,7 +176,7 @@ def getHelpMarkdown(policies, vulnerability):
         messageText += f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
-    if "technicalDescription" in vulnerability:
+    if "technicalDescription" in vulnerability and vulnerability['technicalDescription']:
         messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
     else:
         #CVEs don't have technical description
