@@ -4,6 +4,8 @@ import json
 import logging
 import argparse
 import sys
+import os
+import re
 import hashlib
 from blackduck.HubRestApi import HubInstance
 from timeit import default_timer as timer
@@ -16,6 +18,34 @@ __versionro__="0.1.7"
 #Global variables
 args = "" 
 MAX_LIMIT=1000
+
+toolName="Synopsys Black Duck Intelligent"
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json"]
+
+def find_file_dependency_file(dependency):
+    logging.debug(f"Searching {dependency} from {os.getcwd()}")
+    for dirpath, dirnames, filenames in os.walk(os.getcwd(), True):
+        dependencyFiles = set(filenames).intersection(set(supportedPackageManagerFiles))
+        for dependencyFile in dependencyFiles:
+            lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
+            if lineNumber:
+                filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
+                if filepath == "":
+                    logging.debug(f'dependency {dependency} found from {filepath}{dependencyFile} at line {lineNumber}')
+                    return dependencyFile, lineNumber
+                else:
+                    logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
+                    return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
+    return None, None
+
+def checkDependencyLineNro(filename, dependency):
+    with open(filename) as dependencyFile:
+        for num, line in enumerate(dependencyFile, 1):
+            if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
+                return num
+
+def get_vulnerability_overview(hub, vulnerability):
+    return hub.execute_get(vulnerability['_meta']['href']).json()
 
 def get_version_components(hub, projectversion, limit=MAX_LIMIT):
     parameters={"filter":f'{createFilterForCompoents()}', "limit": limit}
@@ -69,6 +99,7 @@ def addFindings():
             ruleId = ""
             if component_vulnerabilities and len(component_vulnerabilities) > 0:
                 for vulnerability in component_vulnerabilities:
+                    vulnerability = get_vulnerability_overview(hub, vulnerability)
                     rule, result = {}, {}
                     ruleId = vulnerability["name"]
                     ## Adding vulnerabilities as a rule
@@ -76,17 +107,37 @@ def addFindings():
                         rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
                             "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                             "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability)},
-                            "properties": {"category": checkOrigin(component), "security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
+                            "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
                             "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
                         rules.append(rule)
                         ruleIds.append(ruleId)
                     ## Adding results for vulnerabilities
                     result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
-                    result['locations'] = [{"physicalLocation":{"artifactLocation":{"uri": "file:////" + checkOrigin(component)}}}]
+                    result['locations'] = checkLocations(hub, component)
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_full').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
+            else:
+                #There is no vulnerabilities in this component, but it has some kind of policy violation
+                logging.debug(f"Component {component['componentName']} has no vulnerabilites, but has the policy violation!")
+                #TODO create sarif output for those components which have only policy violations
+                
     return results, rules
+
+def checkLocations(hub,component):
+    matchedFiles = getLinksData(hub, component, "matched-files")
+    locations = []
+    if matchedFiles and matchedFiles['totalCount'] > 0:
+        for matchFile in matchedFiles['items']:
+            fileName = matchFile['filePath']['archiveContext'].split('!')[0]
+            locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileName}'},"region":{"startLine":1}}})
+    else:
+        fileWithPath, lineNumber = find_file_dependency_file((component['origins'][0]['packageUrl'].split('/')[1].split('@')[0]).replace("-","\-"))
+        lineNro = 1
+        if lineNumber: 
+            lineNro = int(lineNumber)
+        locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["origins"][0]["packageUrl"]}'},"region":{"startLine":lineNro}}})
+    return locations
 
 def getSeverityScore(vulnerability):
     return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
@@ -125,10 +176,16 @@ def getHelpMarkdown(policies, vulnerability):
         messageText += f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
-    messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
-    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}'
+    if "technicalDescription" in vulnerability:
+        messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+    else:
+        #CVEs don't have technical description
+        messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}\nDisclosure {getDate(vulnerability,"disclosureDate")}\nExploit Available {getDate(vulnerability,"exploitPublishDate")}'
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
     messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
+    messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
 
     if policies:
         messageText += "\n\n## Policy violations\n"
@@ -151,7 +208,7 @@ def getDate(vulnerability, whichDate):
        datetime_to_modify = datetime.strptime(vulnerability[whichDate], "%Y-%m-%dT%H:%M:%S.%fZ")
     if datetime_to_modify:
         return datetime.strftime(datetime_to_modify, "%B %d, %Y")
-    return ""
+    return "-"
 
 def addTags(vulnerability):
     tags = []

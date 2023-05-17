@@ -97,7 +97,7 @@ def addFindings():
                     rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
                         "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                         "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(component, vulnerability)},
-                        "properties": {"category": checkOrigin(component), "security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, None)},
+                        "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, None)},
                         "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['vulnSeverity'].lower())}}
                     rules.append(rule)
                     ruleIds.append(ruleId)
@@ -107,7 +107,7 @@ def addFindings():
                 locations = []
                 #There might be several transient dependencies
                 for dependencies in component["dependencyTrees"]:
-                    fileWithPath, lineNumber = find_file_dependency_file(dependencies[1].replace('/',':').split(':')[0])
+                    fileWithPath, lineNumber = find_file_dependency_file((dependencies[1].replace('/',':').split(':')[0]).replace('-','\-'))
                     lineNro = 1
                     if lineNumber: 
                         lineNro = int(lineNumber)
