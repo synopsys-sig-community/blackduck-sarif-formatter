@@ -113,7 +113,7 @@ def addFindings():
                         lineNro = int(lineNumber)
                     locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["componentIdentifier"]}'},"region":{"startLine":lineNro}}})
                 result['locations'] = locations
-                result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_rapid').encode(encoding='UTF-8')).hexdigest()}
+                result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
     return results, rules
 

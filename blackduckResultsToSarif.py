@@ -125,9 +125,8 @@ def addFindings():
                     ## Adding results for vulnerabilities
                     result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
-                    if locations and len(locations) > 0:
-                        result['locations'] = locations[0]
-                    result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_full').encode(encoding='UTF-8')).hexdigest()}
+                    result['locations'] = locations
+                    result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
             else:
                 #There is no vulnerabilities in this component, but it has some kind of policy violation
@@ -164,7 +163,7 @@ def checkLocations(hub,projectId,projectVersionId,component):
             if lineNumber: 
                 lineNro = int(lineNumber)
             if fileWithPath:
-                locations.append({"physicalLocation":{"artifactLocation":{"uri": fileWithPath},"region":{"startLine":lineNro}}})
+                locations.append({"physicalLocation":{"artifactLocation":{"uri": fileWithPath.replace('\\','/')},"region":{"startLine":lineNro}}})
             dependency_tree.extend(dependencies)
     return locations, dependency_tree, dependency_tree_matched
 
