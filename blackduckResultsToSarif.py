@@ -125,7 +125,8 @@ def addFindings():
                     ## Adding results for vulnerabilities
                     result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
-                    result['locations'] = locations
+                    if locations and len(locations) > 0:
+                        result['locations'] = locations[0]
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_full').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
             else:
