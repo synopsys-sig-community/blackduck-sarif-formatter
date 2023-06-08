@@ -154,10 +154,10 @@ def checkLocations(hub,projectId,projectVersionId,component):
         for matchFile in matchedFiles['items']:
             fileName = matchFile['filePath']['archiveContext'].split('!')[0]
             locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileName}'},"region":{"startLine":1}}})
-            dependency_tree_matched.append(fileName)
+            dependency_tree_matched.append(matchFile['filePath']['compositePathContext'].split('!')[0])
     else:
         dependencies = getDependenciesForComponent(hub, projectId, projectVersionId, component)
-        if dependencies:
+        if dependencies and len(dependencies) > 0:
             fileWithPath, lineNumber = find_file_dependency_file(re.split(r'[:/]',dependencies[-2])[-2].replace("-","\-"))
             lineNro = 1
             if lineNumber: 
@@ -212,9 +212,12 @@ def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_ma
             messageText += f'{intents}* {dependency}\n'
             intents += "    "
     if dependency_tree_matched:
-        messageText += "\n\n## Found from\n"
-        for dependency in dependency_tree_matched[::-1]:
-            messageText += f'* {dependency}\n'
+        messageText += "\n\n## </>Source\n"
+        for dependencyline in dependency_tree_matched:
+            intents = ""
+            for dependency in dependencyline.split('#')[::-1]:
+                messageText += f'{intents}* {dependency}\n'
+                intents += "    "
 
     if "technicalDescription" in vulnerability and vulnerability['technicalDescription']:
         messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
