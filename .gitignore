@@ -1,1 +1,8 @@
 .restconfig.json
+all_components.json
+dependency_paths.json
+full_result.json
+components.json
+hierarchical_components.json
+proejct.json
+version.json

@@ -56,6 +56,14 @@ def get_version_components(hub, projectversion, limit=MAX_LIMIT):
     jsondata = response.json()
     return jsondata
 
+def get_Dependency_paths(hub, projectID, projectversionID, originID):
+    url = f"{hub.get_urlbase()}/api/project/{projectID}/version/{projectversionID}/origin/{originID}/dependency-paths"
+    headers = hub.get_headers()
+    headers['Accept'] = 'application/vnd.blackducksoftware.bill-of-materials-6+json'
+    response = requests.get(url, headers=headers, verify = not hub.config['insecure'])
+    jsondata = response.json()
+    return jsondata
+
 def createFilterForCompoents():
     policyCategories = args.policyCategories.split(',')
     policyCategoryOptions = ""
@@ -84,8 +92,11 @@ def addFindings():
     hub = HubInstance(args.url, api_token=args.token, insecure=False)
     version = hub.get_project_version_by_name(args.project, args.version)
     if version:
+        projectVersionId = version["_meta"]["href"].split("/")[-1]
+        projectId = version["_meta"]["href"].split("/")[-3]
         components = get_version_components(hub, version)['items']
         for component in components:
+            locations, dependency_tree, dependency_tree_matched = checkLocations(hub, projectId, projectVersionId, component)
             policies = []
             if args.policies:
                 policy_status = getLinksData(hub, component, "policy-status")
@@ -106,7 +117,7 @@ def addFindings():
                     if not ruleId in ruleIds:
                         rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
                             "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability)},
+                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched)},
                             "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
                             "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
                         rules.append(rule)
@@ -114,7 +125,7 @@ def addFindings():
                     ## Adding results for vulnerabilities
                     result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
-                    result['locations'] = checkLocations(hub, component)
+                    result['locations'] = locations
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}_full').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
             else:
@@ -124,25 +135,42 @@ def addFindings():
                 
     return results, rules
 
-def checkLocations(hub,component):
+def getDependenciesForComponent(hub, projectId, projectVersionId, component):
+    dependencies = []
+    for origin in component["origins"]:
+        originID = getLinksparam(origin, "origin", "href").split("/")[-1]
+        dependency_paths = get_Dependency_paths(hub, projectId, projectVersionId, originID)
+        if dependency_paths and dependency_paths['totalCount'] > 0:
+            for dependency in dependency_paths['items']:
+                for path in dependency['path']:
+                    if "originId" in path and path['originId']:
+                        dependencies.append(path['originId'])
+    return dependencies
+
+def checkLocations(hub,projectId,projectVersionId,component):
     matchedFiles = getLinksData(hub, component, "matched-files")
-    locations = []
+    locations, dependency_tree, dependency_tree_matched = [],[],[]
     if matchedFiles and matchedFiles['totalCount'] > 0:
         for matchFile in matchedFiles['items']:
             fileName = matchFile['filePath']['archiveContext'].split('!')[0]
             locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileName}'},"region":{"startLine":1}}})
+            dependency_tree_matched.append(fileName)
     else:
-        fileWithPath, lineNumber = find_file_dependency_file((component['origins'][0]['packageUrl'].split('/')[1].split('@')[0]).replace("-","\-"))
-        lineNro = 1
-        if lineNumber: 
-            lineNro = int(lineNumber)
-        locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["origins"][0]["packageUrl"].replace("pkg:","")}'},"region":{"startLine":lineNro}}})
-    return locations
+        dependencies = getDependenciesForComponent(hub, projectId, projectVersionId, component)
+        if dependencies:
+            fileWithPath, lineNumber = find_file_dependency_file(re.split(r'[:/]',dependencies[-2])[-2].replace("-","\-"))
+            lineNro = 1
+            if lineNumber: 
+                lineNro = int(lineNumber)
+            if fileWithPath:
+                locations.append({"physicalLocation":{"artifactLocation":{"uri": fileWithPath},"region":{"startLine":lineNro}}})
+            dependency_tree.extend(dependencies)
+    return locations, dependency_tree, dependency_tree_matched
 
 def getSeverityScore(vulnerability):
     return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
 
-def getHelpMarkdown(policies, vulnerability):
+def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched):
     cvss_version = ""
     if "cvss3" in vulnerability:
         cvss_version = "cvss3"
@@ -176,6 +204,18 @@ def getHelpMarkdown(policies, vulnerability):
         messageText += f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
+    #Adding dependency tree or location
+    if dependency_tree:
+        messageText += "\n\n## Dependency tree\n"
+        intents = ""
+        for dependency in dependency_tree[::-1]:
+            messageText += f'{intents}* {dependency}\n'
+            intents += "    "
+    if dependency_tree_matched:
+        messageText += "\n\n## Found from\n"
+        for dependency in dependency_tree_matched[::-1]:
+            messageText += f'* {dependency}\n'
+
     if "technicalDescription" in vulnerability and vulnerability['technicalDescription']:
         messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
     else:
@@ -267,8 +307,8 @@ def getSarifJsonHeader():
 def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
-def writeToFile(findingsInSarif, outputFile):
-    f = open(outputFile, "w")
+def writeToFile(findingsInSarif, outputFile, mode="w"):
+    f = open(outputFile, mode)
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
 
