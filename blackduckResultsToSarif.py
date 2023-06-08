@@ -154,7 +154,7 @@ def checkLocations(hub,projectId,projectVersionId,component):
         for matchFile in matchedFiles['items']:
             fileName = matchFile['filePath']['archiveContext'].split('!')[0]
             locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileName}'},"region":{"startLine":1}}})
-            dependency_tree_matched.append(matchFile['filePath']['compositePathContext'].split('!')[0])
+            dependency_tree_matched.append(matchFile['filePath']['compositePathContext'])
     else:
         dependencies = getDependenciesForComponent(hub, projectId, projectVersionId, component)
         if dependencies and len(dependencies) > 0:
@@ -215,7 +215,8 @@ def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_ma
         messageText += "\n\n## </>Source\n"
         for dependencyline in dependency_tree_matched:
             intents = ""
-            for dependency in dependencyline.split('#')[::-1]:
+            logging.info(dependencyline)
+            for dependency in re.split(r'[#!]',dependencyline)[::-1]:
                 messageText += f'{intents}* {dependency}\n'
                 intents += "    "
 
