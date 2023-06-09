@@ -97,6 +97,7 @@ def addFindings():
         components = get_version_components(hub, version)['items']
         for component in components:
             locations, dependency_tree, dependency_tree_matched = checkLocations(hub, projectId, projectVersionId, component)
+            origin = checkOrigin(component)
             policies = []
             if args.policies:
                 policy_status = getLinksData(hub, component, "policy-status")
@@ -112,7 +113,7 @@ def addFindings():
                 for vulnerability in component_vulnerabilities:
                     vulnerability = get_vulnerability_overview(hub, vulnerability)
                     rule, result = {}, {}
-                    ruleId = vulnerability["name"]
+                    ruleId = f'{vulnerability["name"]+"-"+origin if origin else vulnerability["name"]}'
                     ## Adding vulnerabilities as a rule
                     if not ruleId in ruleIds:
                         rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
@@ -215,10 +216,11 @@ def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_ma
         messageText += "\n\n## </>Source\n"
         for dependencyline in dependency_tree_matched:
             intents = ""
-            logging.info(dependencyline)
-            for dependency in re.split(r'[#!]',dependencyline)[::-1]:
-                messageText += f'{intents}* {dependency}\n'
-                intents += "    "
+            for dependencies in dependencyline.split('#')[::-1]:
+                for dependency in dependencies.split('!/'):
+                    if dependency:
+                        messageText += f'{intents}* {dependency}\n'
+                        intents += "    "
 
     if "technicalDescription" in vulnerability and vulnerability['technicalDescription']:
         messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
