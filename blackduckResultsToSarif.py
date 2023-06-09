@@ -13,7 +13,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.7"
+__versionro__="0.1.8"
 
 #Global variables
 args = "" 
@@ -143,9 +143,11 @@ def getDependenciesForComponent(hub, projectId, projectVersionId, component):
         dependency_paths = get_Dependency_paths(hub, projectId, projectVersionId, originID)
         if dependency_paths and dependency_paths['totalCount'] > 0:
             for dependency in dependency_paths['items']:
+                paths = []
                 for path in dependency['path']:
                     if "originId" in path and path['originId']:
-                        dependencies.append(path['originId'])
+                        paths.append(path['originId'])
+                dependencies.append(paths)
     return dependencies
 
 def checkLocations(hub,projectId,projectVersionId,component):
@@ -159,7 +161,7 @@ def checkLocations(hub,projectId,projectVersionId,component):
     else:
         dependencies = getDependenciesForComponent(hub, projectId, projectVersionId, component)
         if dependencies and len(dependencies) > 0:
-            fileWithPath, lineNumber = find_file_dependency_file(re.split(r'[:/]',dependencies[-2])[-2].replace("-","\-"))
+            fileWithPath, lineNumber = find_file_dependency_file(re.split(r'[:/]',dependencies[0][-2])[-2].replace("-","\-"))
             lineNro = 1
             if lineNumber: 
                 lineNro = int(lineNumber)
@@ -208,10 +210,11 @@ def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_ma
     #Adding dependency tree or location
     if dependency_tree:
         messageText += "\n\n## Dependency tree\n"
-        intents = ""
-        for dependency in dependency_tree[::-1]:
-            messageText += f'{intents}* {dependency}\n'
-            intents += "    "
+        for dependencyline in dependency_tree:
+            intents = ""
+            for dependency in dependencyline[::-1]:
+                messageText += f'{intents}* {dependency}\n'
+                intents += "    "
     if dependency_tree_matched:
         messageText += "\n\n## </>Source\n"
         for dependencyline in dependency_tree_matched:
