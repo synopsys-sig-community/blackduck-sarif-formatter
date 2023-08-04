@@ -126,7 +126,8 @@ def addFindings():
                     ## Adding results for vulnerabilities
                     result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
                     result['ruleId'] = ruleId
-                    result['locations'] = locations
+                    if locations and len(locations) > 0:
+                        result['locations'] = locations
                     result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                     results.append(result)
             else:
@@ -161,7 +162,18 @@ def checkLocations(hub,projectId,projectVersionId,component):
     else:
         dependencies = getDependenciesForComponent(hub, projectId, projectVersionId, component)
         if dependencies and len(dependencies) > 0:
-            fileWithPath, lineNumber = find_file_dependency_file(re.split(r'[:/]',dependencies[0][-2])[-2].replace("-","\-"))
+            logging.debug(dependencies)
+            testingDependencies = []
+            if len(dependencies[0]) > 1:
+                testingDependencies = dependencies[0][-2]
+            else:
+                testingDependencies = dependencies[0][0]
+            componentTofind = None
+            if testingDependencies and len(testingDependencies) > 1:
+                componentTofind = re.split(r'[:/]',testingDependencies)[-2]
+            else:
+                componentTofind = re.split(r'[:/]',testingDependencies)[0]
+            fileWithPath, lineNumber = find_file_dependency_file(componentTofind.replace("-","\-"))
             lineNro = 1
             if lineNumber: 
                 lineNro = int(lineNumber)
