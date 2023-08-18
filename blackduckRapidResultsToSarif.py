@@ -107,12 +107,17 @@ def addFindings():
                 locations = []
                 #There might be several transient dependencies
                 for dependencies in component["dependencyTrees"]:
-                    fileWithPath, lineNumber = find_file_dependency_file((dependencies[1].replace('/',':').split(':')[0]).replace('-','\-'))
-                    lineNro = 1
-                    if lineNumber: 
-                        lineNro = int(lineNumber)
-                    locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["componentIdentifier"]}'},"region":{"startLine":lineNro}}})
-                result['locations'] = locations
+                    logging.debug(dependencies)
+                    if len(dependencies) > 0:
+                        component_to_find = dependencies[0]
+                        if len(dependencies) > 1:
+                            component_to_find = dependencies[1]
+                        fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
+                        lineNro = 1
+                        if lineNumber: 
+                            lineNro = int(lineNumber)
+                        locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["componentIdentifier"]}'},"region":{"startLine":lineNro}}})
+                    result['locations'] = locations
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
     return results, rules
