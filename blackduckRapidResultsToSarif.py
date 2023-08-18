@@ -13,7 +13,7 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.1"
+__versionro__="0.1.2"
 
 #Global variables
 args = "" 
@@ -34,6 +34,9 @@ def find_file_dependency_file(dependency):
                 else:
                     logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
                     return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
+    else:
+        logging.debug(f'dependency {dependency} not found!')
+        return None, None
 
 def checkDependencyLineNro(filename, dependency):
     with open(filename) as dependencyFile:
@@ -117,7 +120,7 @@ def addFindings():
                         if lineNumber: 
                             lineNro = int(lineNumber)
                         locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["componentIdentifier"]}'},"region":{"startLine":lineNro}}})
-                    result['locations'] = locations
+                result['locations'] = locations
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
     return results, rules
