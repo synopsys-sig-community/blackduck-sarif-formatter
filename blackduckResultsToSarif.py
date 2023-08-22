@@ -7,6 +7,7 @@ import sys
 import os
 import re
 import hashlib
+import urllib.parse
 from blackduck.HubRestApi import HubInstance
 from timeit import default_timer as timer
 import requests
@@ -96,44 +97,45 @@ def addFindings():
         projectId = version["_meta"]["href"].split("/")[-3]
         components = get_version_components(hub, version)['items']
         for component in components:
-            locations, dependency_tree, dependency_tree_matched = checkLocations(hub, projectId, projectVersionId, component)
-            origin = checkOrigin(component)
-            policies = []
-            if args.policies:
-                policy_status = getLinksData(hub, component, "policy-status")
-                if policy_status:
-                    policy_rules = getPolicyRules(hub, policy_status)
-                    if policy_rules:
-                        for policy in policy_rules:
-                            if policy["category"] in args.policyCategories.split(','): 
-                                policies.append(policy)
-            component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
-            ruleId = ""
-            if component_vulnerabilities and len(component_vulnerabilities) > 0:
-                for vulnerability in component_vulnerabilities:
-                    vulnerability = get_vulnerability_overview(hub, vulnerability)
-                    rule, result = {}, {}
-                    ruleId = f'{vulnerability["name"]+"-"+origin if origin else vulnerability["name"]}'
-                    ## Adding vulnerabilities as a rule
-                    if not ruleId in ruleIds:
-                        rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
-                            "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                            "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched)},
-                            "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
-                            "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
-                        rules.append(rule)
-                        ruleIds.append(ruleId)
-                    ## Adding results for vulnerabilities
-                    result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
-                    result['ruleId'] = ruleId
-                    if locations and len(locations) > 0:
-                        result['locations'] = locations
-                    result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
-                    results.append(result)
-            else:
-                #There is no vulnerabilities in this component, but it has some kind of policy violation
-                logging.debug(f"Component {component['componentName']} has no vulnerabilites, but has the policy violation!")
-                #TODO create sarif output for those components which have only policy violations
+            if not component['componentType'] == "SUB_PROJECT":
+                locations, dependency_tree, dependency_tree_matched = checkLocations(hub, projectId, projectVersionId, component)
+                origin = checkOrigin(component)
+                policies = []
+                if args.policies:
+                    policy_status = getLinksData(hub, component, "policy-status")
+                    if policy_status:
+                        policy_rules = getPolicyRules(hub, policy_status)
+                        if policy_rules:
+                            for policy in policy_rules:
+                                if policy["category"] in args.policyCategories.split(','): 
+                                    policies.append(policy)
+                component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
+                ruleId = ""
+                if component_vulnerabilities and len(component_vulnerabilities) > 0:
+                    for vulnerability in component_vulnerabilities:
+                        vulnerability = get_vulnerability_overview(hub, vulnerability)
+                        rule, result = {}, {}
+                        ruleId = f'{vulnerability["name"]+"-"+origin if origin else vulnerability["name"]}'
+                        ## Adding vulnerabilities as a rule
+                        if not ruleId in ruleIds:
+                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
+                                "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
+                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched)},
+                                "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
+                                "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
+                            rules.append(rule)
+                            ruleIds.append(ruleId)
+                        ## Adding results for vulnerabilities
+                        result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
+                        result['ruleId'] = ruleId
+                        if locations and len(locations) > 0:
+                            result['locations'] = locations
+                        result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                        results.append(result)
+                else:
+                    #There is no vulnerabilities in this component, but it has some kind of policy violation
+                    logging.debug(f"Component {component['componentName']} has no vulnerabilites, but has the policy violation!")
+                    #TODO create sarif output for those components which have only policy violations
                 
     return results, rules
 
@@ -179,7 +181,14 @@ def checkLocations(hub,projectId,projectVersionId,component):
                 lineNro = int(lineNumber)
             if fileWithPath:
                 locations.append({"physicalLocation":{"artifactLocation":{"uri": fileWithPath.replace('\\','/')},"region":{"startLine":lineNro}}})
+            else:
+                # locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{urllib.parse.quote(component["origins"][0]["externalId"])}'},"region":{"startLine":1}}})
+                locations.append({"physicalLocation":{"artifactLocation":{"uri":""},"region":{"startLine":1}}})
             dependency_tree.extend(dependencies)
+        else:
+            logging.debug(component["origins"][0]['packageUrl'])
+            locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{component["componentName"]}'},"region":{"startLine":1}}})
+
     return locations, dependency_tree, dependency_tree_matched
 
 def getSeverityScore(vulnerability):
