@@ -182,12 +182,10 @@ def checkLocations(hub,projectId,projectVersionId,component):
             if fileWithPath:
                 locations.append({"physicalLocation":{"artifactLocation":{"uri": fileWithPath.replace('\\','/')},"region":{"startLine":lineNro}}})
             else:
-                # locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{urllib.parse.quote(component["origins"][0]["externalId"])}'},"region":{"startLine":1}}})
-                locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found"},"region":{"startLine":1}}})
+                locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
             dependency_tree.extend(dependencies)
         else:
-            logging.debug(component["origins"][0]['packageUrl'])
-            locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{component["componentName"]}'},"region":{"startLine":1}}})
+            locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
 
     return locations, dependency_tree, dependency_tree_matched
 
