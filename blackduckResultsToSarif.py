@@ -160,7 +160,9 @@ def checkLocations(hub,projectId,projectVersionId,component):
             logging.debug(matchFile)
             fileName = matchFile['filePath']['archiveContext'].split('!')[0]
             if not fileName:
-                fileName = matchFile['filePath']['fileName']
+                fileName = matchFile['filePath']['compositePathContext'].split('!')[0]
+                if not fileName:
+                    fileName = matchFile['filePath']['fileName']
             locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileName}'},"region":{"startLine":1}}})
             dependency_tree_matched.append(matchFile['filePath']['compositePathContext'])
     else:
