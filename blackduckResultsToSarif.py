@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.8"
+__versionro__="0.1.9"
 
 #Global variables
 args = "" 
