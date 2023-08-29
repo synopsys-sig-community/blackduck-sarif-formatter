@@ -186,7 +186,8 @@ def checkLocations(hub,projectId,projectVersionId,component):
             dependency_tree.extend(dependencies)
         else:
             locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
-
+    if not len(locations) > 0:
+        locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
     return locations, dependency_tree, dependency_tree_matched
 
 def getSeverityScore(vulnerability):
@@ -227,14 +228,14 @@ def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_ma
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
     #Adding dependency tree or location
-    if dependency_tree:
+    if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
         for dependencyline in dependency_tree:
             intents = ""
             for dependency in dependencyline[::-1]:
                 messageText += f'{intents}* {dependency}\n'
                 intents += "    "
-    if dependency_tree_matched:
+    if dependency_tree_matched and len(dependency_tree_matched) > 0:
         messageText += "\n\n## </>Source\n"
         for dependencyline in dependency_tree_matched:
             intents = ""
