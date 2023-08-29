@@ -7,14 +7,13 @@ import sys
 import os
 import re
 import hashlib
-import urllib.parse
 from blackduck.HubRestApi import HubInstance
 from timeit import default_timer as timer
 import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.9"
+__versionro__="0.1.10"
 
 #Global variables
 args = "" 
@@ -158,7 +157,10 @@ def checkLocations(hub,projectId,projectVersionId,component):
     locations, dependency_tree, dependency_tree_matched = [],[],[]
     if matchedFiles and matchedFiles['totalCount'] > 0:
         for matchFile in matchedFiles['items']:
+            logging.debug(matchFile)
             fileName = matchFile['filePath']['archiveContext'].split('!')[0]
+            if not fileName:
+                fileName = matchFile['filePath']['fileName']
             locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileName}'},"region":{"startLine":1}}})
             dependency_tree_matched.append(matchFile['filePath']['compositePathContext'])
     else:
