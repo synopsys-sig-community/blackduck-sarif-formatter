@@ -115,6 +115,7 @@ def addFindings():
                         component_to_find = dependencies[0]
                         if len(dependencies) > 1:
                             component_to_find = dependencies[1]
+                        logging.info(component_to_find)
                         fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
                         lineNro = 1
                         if lineNumber: 
