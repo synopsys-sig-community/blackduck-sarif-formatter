@@ -39,9 +39,10 @@ def find_file_dependency_file(dependency):
         return None, None
 
 def checkDependencyLineNro(filename, dependency):
+    logging.info(f'reading file: {filename}')
     with open(filename) as dependencyFile:
         for num, line in enumerate(dependencyFile, 1):
-            if re.search(rf'\b{dependency}\b', line):
+            if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
                 return num
 
 def get_rapid_scan_results():
