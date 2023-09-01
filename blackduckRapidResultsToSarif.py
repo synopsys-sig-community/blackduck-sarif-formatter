@@ -13,7 +13,7 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.2"
+__versionro__="0.1.3"
 
 #Global variables
 args = "" 
@@ -34,12 +34,10 @@ def find_file_dependency_file(dependency):
                 else:
                     logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
                     return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
-    else:
-        logging.debug(f'dependency {dependency} not found!')
-        return None, None
+    logging.debug(f'dependency {dependency} not found!')
+    return None, None
 
 def checkDependencyLineNro(filename, dependency):
-    logging.info(f'reading file: {filename}')
     with open(filename) as dependencyFile:
         for num, line in enumerate(dependencyFile, 1):
             if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
@@ -116,7 +114,6 @@ def addFindings():
                         component_to_find = dependencies[0]
                         if len(dependencies) > 1:
                             component_to_find = dependencies[1]
-                        logging.info(component_to_find)
                         fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
                         lineNro = 1
                         if lineNumber: 
