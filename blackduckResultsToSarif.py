@@ -36,6 +36,7 @@ def find_file_dependency_file(dependency):
                 else:
                     logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
                     return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
+    logging.debug(f'dependency {dependency} not found!')
     return None, None
 
 def checkDependencyLineNro(filename, dependency):
