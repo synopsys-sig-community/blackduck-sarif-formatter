@@ -13,14 +13,14 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.10"
+__versionro__="0.1.11"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
 
 toolName="Synopsys Black Duck Intelligent"
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json"]
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json", "go.mod", "Gopkg.lock", "gogradle.lock", "vendor.json", "vendor.conf"]
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
@@ -158,7 +158,7 @@ def checkLocations(hub,projectId,projectVersionId,component):
     locations, dependency_tree, dependency_tree_matched = [],[],[]
     if matchedFiles and matchedFiles['totalCount'] > 0:
         for matchFile in matchedFiles['items']:
-            logging.debug(matchFile)
+            logging.debug(f'matchFile: {matchFile}')
             fileName = matchFile['filePath']['archiveContext'].split('!')[0]
             if not fileName:
                 fileName = matchFile['filePath']['compositePathContext'].split('!')[0]

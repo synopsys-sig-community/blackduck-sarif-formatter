@@ -13,12 +13,12 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.3"
+__versionro__="0.1.4"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json"]
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json", "go.mod", "Gopkg.lock", "gogradle.lock", "vendor.json", "vendor.conf"]
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
