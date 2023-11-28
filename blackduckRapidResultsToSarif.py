@@ -18,7 +18,7 @@ __versionro__="0.1.4"
 #Global variables
 args = "" 
 MAX_LIMIT=1000
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json", "go.mod", "Gopkg.lock", "gogradle.lock", "vendor.json", "vendor.conf"]
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json","nuget.config","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
