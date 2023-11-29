@@ -13,17 +13,21 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.5"
+__versionro__="0.1.6"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json","nuget.config","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
+toolName="Synopsys Black Duck Rapid"
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
     for dirpath, dirnames, filenames in os.walk(os.getcwd(), True):
-        dependencyFiles = set(filenames).intersection(set(supportedPackageManagerFiles))
+        re_patterns = []
+        for pattern in supportedPackageManagerFiles:
+            re_patterns.append(re.compile(pattern))
+        dependencyFiles = {e for e in filenames for pattern in re_patterns if re.search(pattern, e)}
         for dependencyFile in dependencyFiles:
             lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
             if lineNumber:
@@ -288,7 +292,7 @@ if __name__ == '__main__':
         sarif_json = getSarifJsonHeader()
         results = {}
         results['results'] = findings
-        results['tool'] = getSarifJsonFooter("Synopsys Black Duck Rapid", rules)
+        results['tool'] = getSarifJsonFooter(toolName, rules)
         runs = []
         runs.append(results)
         sarif_json['runs'] = runs
