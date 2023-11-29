@@ -46,6 +46,7 @@ def checkDependencyLineNro(filename, dependency):
         for num, line in enumerate(dependencyFile, 1):
             if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
                 return num
+    return None
 
 def get_rapid_scan_results():
     hub = HubInstance(args.url, api_token=args.token, insecure=False)
@@ -119,10 +120,10 @@ def addFindings():
                         if len(dependencies) > 1:
                             component_to_find = dependencies[1]
                         fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
-                        lineNro = 1
                         if lineNumber: 
-                            lineNro = int(lineNumber)
-                        locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath if fileWithPath else component["componentIdentifier"]}'},"region":{"startLine":lineNro}}})
+                            locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath}'},"region":{"startLine":int(lineNumber)}}})
+                        else:
+                            locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
                 result['locations'] = locations
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)

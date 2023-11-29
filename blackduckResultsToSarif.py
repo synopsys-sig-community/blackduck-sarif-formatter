@@ -47,6 +47,7 @@ def checkDependencyLineNro(filename, dependency):
         for num, line in enumerate(dependencyFile, 1):
             if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
                 return num
+    return None
 
 def get_vulnerability_overview(hub, vulnerability):
     return hub.execute_get(vulnerability['_meta']['href']).json()
@@ -103,6 +104,7 @@ def addFindings():
             if not component['componentType'] == "SUB_PROJECT":
                 locations, dependency_tree, dependency_tree_matched = checkLocations(hub, projectId, projectVersionId, component)
                 origin = checkOrigin(component)
+                # logging.debug(f'component: {component}')
                 policies = []
                 if args.policies:
                     policy_status = getLinksData(hub, component, "policy-status")
