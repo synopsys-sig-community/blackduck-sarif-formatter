@@ -13,19 +13,22 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.12"
+__versionro__="0.1.13"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
 
 toolName="Synopsys Black Duck Intelligent"
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json","nuget.config","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
     for dirpath, dirnames, filenames in os.walk(os.getcwd(), True):
-        dependencyFiles = set(filenames).intersection(set(supportedPackageManagerFiles))
+        re_patterns = []
+        for pattern in supportedPackageManagerFiles:
+            re_patterns.append(re.compile(pattern))
+        dependencyFiles = {e for e in filenames for pattern in re_patterns if re.search(pattern, e)}
         for dependencyFile in dependencyFiles:
             lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
             if lineNumber:
