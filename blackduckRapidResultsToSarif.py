@@ -170,8 +170,17 @@ def getHelpMarkdown(component, vulnerability):
     messageText += f'\nVulnerability Age {timeAfter.days} Days.'    
     messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
+    if "transitiveUpgradeGuidance" in component and len(component["transitiveUpgradeGuidance"]) > 0:
+        for transitiveUpgradeGuidance in component["transitiveUpgradeGuidance"]:
+            messageText += "\n\n## Upgrade guidance for transient dependency\n"
+            messageText += f'**Upgrade guidance for a component:**\t{transitiveUpgradeGuidance["externalId"]} to upgrade transient dependency component: {component["externalId"]}\n'
+            if "shortTermUpgradeGuidance" in transitiveUpgradeGuidance:
+                messageText += f'**Recommended short term upgrade to version:**\t{transitiveUpgradeGuidance["shortTermUpgradeGuidance"]["versionName"]}\n'
+            if "longTermUpgradeGuidance" in transitiveUpgradeGuidance:
+                messageText += f'**Recommended long term upgrade to version:**\t{transitiveUpgradeGuidance["longTermUpgradeGuidance"]["versionName"]}\n'
     if "shortTermUpgradeGuidance" in component or "longTermUpgradeGuidance" in component:
         messageText += "\n\n## Upgrade guidance\n"
+        messageText += f'**Upgrade guidance for a component:**\t{component["externalId"]}\n'
         if "shortTermUpgradeGuidance" in component:
             messageText += f'**Recommended short term upgrade to version:**\t{component["shortTermUpgradeGuidance"]["versionName"]}\n'
         if "longTermUpgradeGuidance" in component:
