@@ -42,7 +42,7 @@ def find_file_dependency_file(dependency):
     return None, None
 
 def checkDependencyLineNro(filename, dependency):
-    with open(filename) as dependencyFile:
+    with open(filename, encoding="UTF-8") as dependencyFile:
         for num, line in enumerate(dependencyFile, 1):
             if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
                 return num
@@ -60,7 +60,7 @@ def get_rapid_scan_results():
             return None
 
         bd_rapid_output_file = bd_rapid_output_file_glob
-        with open(bd_rapid_output_file) as f:
+        with open(bd_rapid_output_file, encoding="UTF-8") as f:
             output_data = json.load(f)
 
         if len(output_data) <= 0 or '_meta' not in output_data[0] or 'href' not in output_data[0]['_meta']:
