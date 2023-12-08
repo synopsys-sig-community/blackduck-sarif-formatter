@@ -13,7 +13,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.13"
+__versionro__="0.1.14"
 
 #Global variables
 args = "" 
@@ -347,7 +347,7 @@ def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
 def writeToFile(findingsInSarif, outputFile, mode="w"):
-    f = open(outputFile, mode)
+    f = open(outputFile, mode, encoding="UTF-8")
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
 

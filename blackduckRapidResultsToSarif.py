@@ -13,7 +13,7 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.6"
+__versionro__="0.1.7"
 
 #Global variables
 args = "" 
@@ -265,7 +265,7 @@ def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
 def writeToFile(findingsInSarif, outputFile):
-    f = open(outputFile, "w")
+    f = open(outputFile, "w", encoding="UTF-8")
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
 
