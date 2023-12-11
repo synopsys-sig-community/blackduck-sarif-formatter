@@ -43,7 +43,7 @@ def find_file_dependency_file(dependency):
     return None, None
 
 def checkDependencyLineNro(filename, dependency):
-    with codecs.open(filename, "r", encoding="utf8") as dependencyFile:
+    with codecs.open(filename, "r", encoding="utf8", errors="ignore") as dependencyFile:
         for num, line in enumerate(dependencyFile, 1):
             if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
                 return num
@@ -61,7 +61,7 @@ def get_rapid_scan_results():
             return None
 
         bd_rapid_output_file = bd_rapid_output_file_glob
-        with codecs.open(bd_rapid_output_file, "r", encoding="utf8") as f:
+        with codecs.open(bd_rapid_output_file, "r", encoding="utf8", errors="ignore") as f:
             output_data = json.load(f)
 
         if len(output_data) <= 0 or '_meta' not in output_data[0] or 'href' not in output_data[0]['_meta']:
@@ -266,7 +266,7 @@ def getSarifJsonFooter(toolDriverName, rules):
     return {"driver":{"name":toolDriverName,"informationUri": f'{args.url if args.url else ""}',"version":__versionro__,"organization":"Synopsys","rules":rules}}
 
 def writeToFile(findingsInSarif, outputFile):
-    f = open(outputFile, "w", encoding="UTF-8")
+    f = open(outputFile, "w", encoding="utf8")
     f.write(json.dumps(findingsInSarif, indent=3))
     f.close()
 

@@ -44,7 +44,7 @@ def find_file_dependency_file(dependency):
     return None, None
 
 def checkDependencyLineNro(filename, dependency):
-    with codecs.open(filename, "r", encoding="utf8") as dependencyFile:
+    with codecs.open(filename, "r", encoding="utf8", errors="ignore") as dependencyFile:
         for num, line in enumerate(dependencyFile, 1):
             if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
                 return num
