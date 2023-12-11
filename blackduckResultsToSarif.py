@@ -7,13 +7,14 @@ import sys
 import os
 import re
 import hashlib
+import codecs
 from blackduck.HubRestApi import HubInstance
 from timeit import default_timer as timer
 import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.14"
+__versionro__="0.1.15"
 
 #Global variables
 args = "" 
@@ -43,7 +44,7 @@ def find_file_dependency_file(dependency):
     return None, None
 
 def checkDependencyLineNro(filename, dependency):
-    with open(filename, encoding="UTF-8") as dependencyFile:
+    with codecs.open(filename, "r", encoding="utf8") as dependencyFile:
         for num, line in enumerate(dependencyFile, 1):
             if re.search(rf'\b{dependency}\b', line, re.IGNORECASE):
                 return num
