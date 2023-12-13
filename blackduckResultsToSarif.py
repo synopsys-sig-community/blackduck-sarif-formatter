@@ -155,14 +155,14 @@ def addFindings():
                                 ## Adding vulnerabilities as a rule
                                 if not ruleId in ruleIds:
                                     rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'}, 
-                                        "fullDescription":{"text":f'{policy_violation["description"][:1000] if policy_violation["description"] else "-"}', "markdown": f'{policy_violation["description"] if policy_violation["description"] else "-"}'},
-                                        "help":{"text":f'{policy_violation["description"] if policy_violation["description"] else "-"}', "markdown": getHelpMarkdownLicense(policy_violation, dependency_tree, dependency_tree_matched)},
-                                        "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower())},
+                                        "fullDescription":{"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
+                                        "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(policy_violation, dependency_tree, dependency_tree_matched)},
+                                        "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": "LICENSE_VIOLATION"},
                                         "defaultConfiguration":{"level":nativeSeverityToLevel(policy_violation['severity'].lower())}}
                                     rules.append(rule)
                                     ruleIds.append(ruleId)
                                 ## Adding results for vulnerabilities
-                                result['message'] = {"text":f'{policy_violation["description"][:1000] if policy_violation["description"] else "-"}'}
+                                result['message'] = {"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}'}
                                 result['ruleId'] = ruleId
                                 if locations and len(locations) > 0:
                                     result['locations'] = locations
@@ -232,7 +232,7 @@ def getSeverityScore(vulnerability):
 
 def getHelpMarkdownLicense(policy_violation, dependency_tree, dependency_tree_matched):
     messageText = ""
-    messageText += f'\n\n## Description\n'
+    messageText += f'## Description\n'
     messageText += f'**Policy name:**\t{policy_violation["name"] if "name" in policy_violation else "-"}\n'
     messageText += f'**Policy description:**\t{policy_violation["description"] if "description" in policy_violation else "-"}\n'
     messageText += f'**Policy severity:**\t{policy_violation["severity"] if "severity" in policy_violation else "-"}\n\n'
@@ -246,10 +246,14 @@ def getHelpMarkdownLicense(policy_violation, dependency_tree, dependency_tree_ma
                 for data in expression["parameters"]["data"]:
                     if "licenseFamilyName" in data:
                         messageText += data["licenseFamilyName"]
-                    if index_data < len(data):
+                    else:
+                        messageText += data["data"]
+                    logging.debug(f'data: {index_data} < {len(expression["parameters"]["data"])}')
+                    if index_data < len(expression["parameters"]["data"]):
                         messageText += ' and '
                     index_data += 1
-            if index_expressions < len(expression):
+            logging.debug(f'expression: {index_expressions} < {len(policy_violation["expression"]["expressions"])}')
+            if index_expressions < len(policy_violation["expression"]["expressions"]):
                 messageText += f' {policy_violation["expression"]["operator"]} '
             index_expressions += 1
 

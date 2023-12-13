@@ -143,7 +143,7 @@ def addFindings():
                     rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{licenseViolation["name"]}: {component["componentName"]}'}, 
                         "fullDescription":{"text":f'{licenseViolation["description"][:1000] if licenseViolation["description"] else "-"}', "markdown": f'{licenseViolation["description"] if licenseViolation["description"] else "-"}'},
                         "help":{"text":f'{licenseViolation["description"] if licenseViolation["description"] else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
-                        "properties": {"security-severity": nativeSeverityToNumber(licenseViolation['policySeverity'].lower())}, 
+                        "properties": {"security-severity": nativeSeverityToNumber(licenseViolation['policySeverity'].lower()), "tags": "LICENSE_VIOLATION"}, 
                         "defaultConfiguration":{"level":nativeSeverityToLevel(licenseViolation['policySeverity'].lower())}}
                     rules.append(rule)
                     ruleIds.append(ruleId)
