@@ -248,15 +248,13 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
                         messageText += data["licenseFamilyName"]
                     else:
                         messageText += data["data"]
-                    logging.debug(f'data: {index_data} < {len(expression["parameters"]["data"])}')
                     if index_data < len(expression["parameters"]["data"]):
                         messageText += ' AND '
                     index_data += 1
-            logging.debug(f'expression: {index_expressions} < {len(policy_violation["expression"]["expressions"])}')
             if index_expressions < len(policy_violation["expression"]["expressions"]):
                 messageText += f' {policy_violation["expression"]["operator"]} '
             index_expressions += 1
-    messageText += f'[View component]({component["component"]})'
+    messageText += f'[View component]({component["componentVersion"]})'
 
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
