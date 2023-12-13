@@ -143,7 +143,7 @@ def addFindings():
                     rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{licenseViolation["name"]}: {component["componentName"]}'}, 
                         "fullDescription":{"text":f'{licenseViolation["description"][:1000] if licenseViolation["description"] else "-"}', "markdown": f'{licenseViolation["description"] if licenseViolation["description"] else "-"}'},
                         "help":{"text":f'{licenseViolation["description"] if licenseViolation["description"] else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
-                        "properties": {"security-severity": nativeSeverityToNumber(licenseViolation['policySeverity'].lower()), "tags": "LICENSE_VIOLATION"}, 
+                        "properties": {"security-severity": nativeSeverityToNumber(licenseViolation['policySeverity'].lower()), "tags": addLicenseTags()}, 
                         "defaultConfiguration":{"level":nativeSeverityToLevel(licenseViolation['policySeverity'].lower())}}
                     rules.append(rule)
                     ruleIds.append(ruleId)
@@ -273,6 +273,12 @@ def addTags(vulnerability, policy_name):
         tags.append(policy_name)
     if "vendorFixDate" in vulnerability:
         tags.append("official_fix")
+    tags.append("security")
+    return tags
+
+def addLicenseTags():
+    tags = []
+    tags.append("LICENSE_VIOLATION")
     tags.append("security")
     return tags
 

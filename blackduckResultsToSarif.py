@@ -157,7 +157,7 @@ def addFindings():
                                     rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'}, 
                                         "fullDescription":{"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
                                         "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched)},
-                                        "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": "LICENSE_VIOLATION"},
+                                        "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": addLicenseTags()},
                                         "defaultConfiguration":{"level":nativeSeverityToLevel(policy_violation['severity'].lower())}}
                                     rules.append(rule)
                                     ruleIds.append(ruleId)
@@ -376,6 +376,12 @@ def addTags(vulnerability):
         if "temporalMetrics" in vulnerability[cvss_version]:
             if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
                 tags.append("official_fix")
+    tags.append("security")
+    return tags
+
+def addLicenseTags():
+    tags = []
+    tags.append("LICENSE_VIOLATION")
     tags.append("security")
     return tags
 
