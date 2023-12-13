@@ -174,7 +174,7 @@ def getSeverityScore(vulnerability):
 
 def getHelpMarkdownLicense(component, licenseViolation):
     messageText = ""
-    messageText += f'\n\n## Description\n'
+    messageText += f'## Description\n'
     messageText += f'**License name:**\t{licenseViolation["name"] if "name" in licenseViolation else "-"}\n'
     messageText += f'**License family:**\t{licenseViolation["licenseFamilyName"] if "licenseFamilyName" in licenseViolation else "-"}\n'
     messageText += f'**License violating policies:**\n'
@@ -182,7 +182,7 @@ def getHelpMarkdownLicense(component, licenseViolation):
         messageText += f'\t**Policy name:**\t{violation["policyName"] if "policyName" in violation else "-"}\n\n'
         messageText += f'\t**Policy description:**\t{violation["description"] if "description" in violation else "-"}\n\n'
         messageText += f'\t**Policy severity:**\t{violation["policySeverity"] if "policySeverity" in violation else "-"}\n\n'
-    messageText += f'[View license]({licenseViolation["_meta"]["href"]})'
+    messageText += f'[View component]({component["_meta"]["href"]})'
 
     return messageText
 

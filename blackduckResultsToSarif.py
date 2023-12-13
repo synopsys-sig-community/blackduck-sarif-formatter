@@ -156,7 +156,7 @@ def addFindings():
                                 if not ruleId in ruleIds:
                                     rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'}, 
                                         "fullDescription":{"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
-                                        "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(policy_violation, dependency_tree, dependency_tree_matched)},
+                                        "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched)},
                                         "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": "LICENSE_VIOLATION"},
                                         "defaultConfiguration":{"level":nativeSeverityToLevel(policy_violation['severity'].lower())}}
                                     rules.append(rule)
@@ -230,7 +230,7 @@ def checkLocations(hub,projectId,projectVersionId,component):
 def getSeverityScore(vulnerability):
     return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
 
-def getHelpMarkdownLicense(policy_violation, dependency_tree, dependency_tree_matched):
+def getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched):
     messageText = ""
     messageText += f'## Description\n'
     messageText += f'**Policy name:**\t{policy_violation["name"] if "name" in policy_violation else "-"}\n'
@@ -250,12 +250,13 @@ def getHelpMarkdownLicense(policy_violation, dependency_tree, dependency_tree_ma
                         messageText += data["data"]
                     logging.debug(f'data: {index_data} < {len(expression["parameters"]["data"])}')
                     if index_data < len(expression["parameters"]["data"]):
-                        messageText += ' and '
+                        messageText += ' AND '
                     index_data += 1
             logging.debug(f'expression: {index_expressions} < {len(policy_violation["expression"]["expressions"])}')
             if index_expressions < len(policy_violation["expression"]["expressions"]):
                 messageText += f' {policy_violation["expression"]["operator"]} '
             index_expressions += 1
+    messageText += f'[View component]({component["component"]})'
 
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
