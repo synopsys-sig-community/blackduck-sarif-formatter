@@ -123,6 +123,7 @@ def addFindings():
                                     policies.append(policy)
                 component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
                 ruleId = ""
+                # Creating sarif for vulnerabilities
                 if component_vulnerabilities and len(component_vulnerabilities) > 0:
                     for vulnerability in component_vulnerabilities:
                         vulnerability = get_vulnerability_overview(hub, vulnerability)
@@ -144,30 +145,29 @@ def addFindings():
                             result['locations'] = locations
                         result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                         results.append(result)
-                else:
-                    #There is no vulnerabilities in this component, but it has some kind of policy violation
-                    # logging.debug(f"Component {component['componentName']} has no vulnerabilites, but has the policy violation!")
-                    if policies and len(policies) > 0:
-                        for policy_violation in policies:
-                            if policy_violation['category'] == "LICENSE":
-                                rule, result = {}, {}
-                                ruleId = f'{policy_violation["name"]+"-"+origin if origin else policy_violation["name"]}'
-                                ## Adding vulnerabilities as a rule
-                                if not ruleId in ruleIds:
-                                    rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'}, 
-                                        "fullDescription":{"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
-                                        "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched)},
-                                        "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": addLicenseTags()},
-                                        "defaultConfiguration":{"level":nativeSeverityToLevel(policy_violation['severity'].lower())}}
-                                    rules.append(rule)
-                                    ruleIds.append(ruleId)
-                                ## Adding results for vulnerabilities
-                                result['message'] = {"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}'}
-                                result['ruleId'] = ruleId
-                                if locations and len(locations) > 0:
-                                    result['locations'] = locations
-                                result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policy_violation["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
-                                results.append(result)
+                # Creating sarif for policy violations
+                if policies and len(policies) > 0:
+                    for policy_violation in policies:
+                        # Creating sarif for LICENSE type of policy violations
+                        if policy_violation['category'] == "LICENSE":
+                            rule, result = {}, {}
+                            ruleId = f'{policy_violation["name"]+"-"+origin if origin else policy_violation["name"]}'
+                            ## Adding policy as a rule
+                            if not ruleId in ruleIds:
+                                rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'}, 
+                                    "fullDescription":{"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
+                                    "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched)},
+                                    "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": addLicenseTags()},
+                                    "defaultConfiguration":{"level":nativeSeverityToLevel(policy_violation['severity'].lower())}}
+                                rules.append(rule)
+                                ruleIds.append(ruleId)
+                            ## Adding results for policy violations
+                            result['message'] = {"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}'}
+                            result['ruleId'] = ruleId
+                            if locations and len(locations) > 0:
+                                result['locations'] = locations
+                            result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policy_violation["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                            results.append(result)
                 
     return results, rules
 
@@ -254,7 +254,7 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
             if index_expressions < len(policy_violation["expression"]["expressions"]):
                 messageText += f' {policy_violation["expression"]["operator"]} '
             index_expressions += 1
-    messageText += f'[View component]({component["componentVersion"]})'
+    messageText += f'\n[View component]({component["componentVersion"]})'
 
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
