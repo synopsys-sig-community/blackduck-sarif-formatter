@@ -134,44 +134,41 @@ def addFindings():
                 result['locations'] = locations
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
-            for licenseViolation in component["policyViolationLicenses"]:
-                for violatingPolicies in licenseViolation["violatingPolicies"]:
-                    #Adding license violations as a separate issues
-                    rule, result = {}, {}
-                    ruleId = violatingPolicies["policyName"]
-                    ## Adding vulnerabilities as a rule
-                    if not ruleId in ruleIds:
-                        logging.debug(violatingPolicies)
-                        rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{violatingPolicies["policyName"]}: {component["componentName"]}'}, 
-                            "fullDescription":{"text":f'{violatingPolicies["description"][:1000] if "description" in violatingPolicies else "-"}', "markdown": f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}'},
-                            "help":{"text":f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
-                            "properties": {"security-severity": nativeSeverityToNumber(violatingPolicies['policySeverity'].lower()), "tags": addLicenseTags()}, 
-                            "defaultConfiguration":{"level":nativeSeverityToLevel(violatingPolicies['policySeverity'].lower())}}
-                        rules.append(rule)
-                        ruleIds.append(ruleId)
-                    ## Adding results for vulnerabilities
-                    result['message'] = {"text":f'{violatingPolicies["description"][:1000] if "description" in violatingPolicies else "-"}'}
-                    result['ruleId'] = ruleId
-                    locations = []
-                    #There might be several transient dependencies
-                    for dependencies in component["dependencyTrees"]:
-                        logging.debug(dependencies)
-                        if len(dependencies) > 0:
-                            component_to_find = dependencies[0]
-                            if len(dependencies) > 1:
-                                component_to_find = dependencies[1]
-                            fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
-                            if lineNumber: 
-                                locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath}'},"region":{"startLine":int(lineNumber)}}})
-                            else:
-                                locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
-                    result['locations'] = locations
-                    result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{violatingPolicies["policyName"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
-                    results.append(result)
-
-
-
-
+            if "LICENSE" in args.policyCategories.split(','):
+                for licenseViolation in component["policyViolationLicenses"]:
+                    for violatingPolicies in licenseViolation["violatingPolicies"]:
+                        #Adding license violations as a separate issues
+                        rule, result = {}, {}
+                        ruleId = violatingPolicies["policyName"]
+                        ## Adding vulnerabilities as a rule
+                        if not ruleId in ruleIds:
+                            logging.debug(violatingPolicies)
+                            rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{violatingPolicies["policyName"]}: {component["componentName"]}'}, 
+                                "fullDescription":{"text":f'{violatingPolicies["description"][:1000] if "description" in violatingPolicies else "-"}', "markdown": f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}'},
+                                "help":{"text":f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
+                                "properties": {"security-severity": nativeSeverityToNumber(violatingPolicies['policySeverity'].lower()), "tags": addLicenseTags()}, 
+                                "defaultConfiguration":{"level":nativeSeverityToLevel(violatingPolicies['policySeverity'].lower())}}
+                            rules.append(rule)
+                            ruleIds.append(ruleId)
+                        ## Adding results for vulnerabilities
+                        result['message'] = {"text":f'{violatingPolicies["description"][:1000] if "description" in violatingPolicies else "-"}'}
+                        result['ruleId'] = ruleId
+                        locations = []
+                        #There might be several transient dependencies
+                        for dependencies in component["dependencyTrees"]:
+                            logging.debug(dependencies)
+                            if len(dependencies) > 0:
+                                component_to_find = dependencies[0]
+                                if len(dependencies) > 1:
+                                    component_to_find = dependencies[1]
+                                fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
+                                if lineNumber: 
+                                    locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath}'},"region":{"startLine":int(lineNumber)}}})
+                                else:
+                                    locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
+                        result['locations'] = locations
+                        result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{violatingPolicies["policyName"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                        results.append(result)
     return results, rules
 
 def getSeverityScore(vulnerability):
@@ -358,6 +355,8 @@ if __name__ == '__main__':
                                                 if outputfile is not given, then json is printed stdout.", required=False)
         parser.add_argument('--log_level', help="Will print more info... default=INFO", default="INFO")
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
+        parser.add_argument('--policyCategories', help="Comma separated list of policy categories, which violations will affect. \
+            Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"
