@@ -141,14 +141,14 @@ def addFindings():
                 ## Adding vulnerabilities as a rule
                 if not ruleId in ruleIds:
                     rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{licenseViolation["name"]}: {component["componentName"]}'}, 
-                        "fullDescription":{"text":f'{licenseViolation["description"][:1000] if licenseViolation["description"] else "-"}', "markdown": f'{licenseViolation["description"] if licenseViolation["description"] else "-"}'},
-                        "help":{"text":f'{licenseViolation["description"] if licenseViolation["description"] else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
+                        "fullDescription":{"text":f'{licenseViolation["description"][:1000] if "description" in licenseViolation else "-"}', "markdown": f'{licenseViolation["description"] if "description" in licenseViolation else "-"}'},
+                        "help":{"text":f'{licenseViolation["description"] if "description" in licenseViolation else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
                         "properties": {"security-severity": nativeSeverityToNumber(licenseViolation['policySeverity'].lower()), "tags": addLicenseTags()}, 
                         "defaultConfiguration":{"level":nativeSeverityToLevel(licenseViolation['policySeverity'].lower())}}
                     rules.append(rule)
                     ruleIds.append(ruleId)
                 ## Adding results for vulnerabilities
-                result['message'] = {"text":f'{licenseViolation["description"][:1000] if licenseViolation["description"] else "-"}'}
+                result['message'] = {"text":f'{licenseViolation["description"][:1000] if "description" in licenseViolation else "-"}'}
                 result['ruleId'] = ruleId
                 locations = []
                 #There might be several transient dependencies
