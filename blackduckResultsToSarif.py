@@ -254,7 +254,7 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
             if index_expressions < len(policy_violation["expression"]["expressions"]):
                 messageText += f' {policy_violation["expression"]["operator"]} '
             index_expressions += 1
-    messageText += f'\n[View component]({component["componentVersion"]})'
+    messageText += f'\n\n[View component {component["componentName"]}]({component["componentVersion"]})'
 
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
