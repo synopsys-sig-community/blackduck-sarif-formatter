@@ -140,6 +140,7 @@ def addFindings():
                 ruleId = licenseViolation["name"]
                 ## Adding vulnerabilities as a rule
                 if not ruleId in ruleIds:
+                    logging.debug(licenseViolation)
                     rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{licenseViolation["name"]}: {component["componentName"]}'}, 
                         "fullDescription":{"text":f'{licenseViolation["description"][:1000] if "description" in licenseViolation else "-"}', "markdown": f'{licenseViolation["description"] if "description" in licenseViolation else "-"}'},
                         "help":{"text":f'{licenseViolation["description"] if "description" in licenseViolation else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
