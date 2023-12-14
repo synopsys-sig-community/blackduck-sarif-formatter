@@ -266,9 +266,9 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
             if "licenseType" in license and license["licenseType"] == "DISJUNCTIVE":
                 messageText += f'**Sub-Licenses:**\n'
                 for disjunctiveLicense in license["licenses"]:
-                    messageText += f'<pre>**License name:**\t{disjunctiveLicense["licenseDisplay"] if "licenseDisplay" in disjunctiveLicense else "-"}\n'
-                    messageText += f'<pre>**License spdxId:**\t{disjunctiveLicense["spdxId"] if "spdxId" in disjunctiveLicense else "-"}\n'
-                    messageText += f'<pre>**License family name:**\t{disjunctiveLicense["licenseFamilyName"] if "licenseFamilyName" in disjunctiveLicense else "-"}\n\n'
+                    messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**License name:**\t{disjunctiveLicense["licenseDisplay"] if "licenseDisplay" in disjunctiveLicense else "-"}\n'
+                    messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**License spdxId:**\t{disjunctiveLicense["spdxId"] if "spdxId" in disjunctiveLicense else "-"}\n'
+                    messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**License family name:**\t{disjunctiveLicense["licenseFamilyName"] if "licenseFamilyName" in disjunctiveLicense else "-"}\n\n'
 
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
