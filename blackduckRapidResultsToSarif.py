@@ -187,7 +187,7 @@ def getHelpMarkdownLicense(component, licenseViolation):
         messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**Policy name:**\t{violation["policyName"] if "policyName" in violation else "-"}\n'
         messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**Policy description:**\t{violation["description"] if "description" in violation else "-"}\n'
         messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**Policy severity:**\t{violation["policySeverity"] if "policySeverity" in violation else "-"}\n\n'
-    messageText += f'[View component]({component["_meta"]["href"]})'
+    messageText += f'[View component]({licenseViolation["_meta"]["href"]})'
 
     return messageText
 
