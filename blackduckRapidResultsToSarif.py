@@ -135,38 +135,42 @@ def addFindings():
                 result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                 results.append(result)
             for licenseViolation in component["policyViolationLicenses"]:
-                #Adding license violations as a separate issues
-                rule, result = {}, {}
-                ruleId = licenseViolation["name"]
-                ## Adding vulnerabilities as a rule
-                if not ruleId in ruleIds:
-                    logging.debug(licenseViolation)
-                    rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{licenseViolation["name"]}: {component["componentName"]}'}, 
-                        "fullDescription":{"text":f'{licenseViolation["description"][:1000] if "description" in licenseViolation else "-"}', "markdown": f'{licenseViolation["description"] if "description" in licenseViolation else "-"}'},
-                        "help":{"text":f'{licenseViolation["description"] if "description" in licenseViolation else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
-                        "properties": {"security-severity": nativeSeverityToNumber(licenseViolation['policySeverity'].lower()), "tags": addLicenseTags()}, 
-                        "defaultConfiguration":{"level":nativeSeverityToLevel(licenseViolation['policySeverity'].lower())}}
-                    rules.append(rule)
-                    ruleIds.append(ruleId)
-                ## Adding results for vulnerabilities
-                result['message'] = {"text":f'{licenseViolation["description"][:1000] if "description" in licenseViolation else "-"}'}
-                result['ruleId'] = ruleId
-                locations = []
-                #There might be several transient dependencies
-                for dependencies in component["dependencyTrees"]:
-                    logging.debug(dependencies)
-                    if len(dependencies) > 0:
-                        component_to_find = dependencies[0]
-                        if len(dependencies) > 1:
-                            component_to_find = dependencies[1]
-                        fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
-                        if lineNumber: 
-                            locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath}'},"region":{"startLine":int(lineNumber)}}})
-                        else:
-                            locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
-                result['locations'] = locations
-                result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{licenseViolation["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
-                results.append(result)
+                for violatingPolicies in licenseViolation["violatingPolicies"]:
+                    #Adding license violations as a separate issues
+                    rule, result = {}, {}
+                    ruleId = violatingPolicies["policyName"]
+                    ## Adding vulnerabilities as a rule
+                    if not ruleId in ruleIds:
+                        logging.debug(violatingPolicies)
+                        rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{violatingPolicies["policyName"]}: {component["componentName"]}'}, 
+                            "fullDescription":{"text":f'{violatingPolicies["description"][:1000] if "description" in violatingPolicies else "-"}', "markdown": f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}'},
+                            "help":{"text":f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
+                            "properties": {"security-severity": nativeSeverityToNumber(violatingPolicies['policySeverity'].lower()), "tags": addLicenseTags()}, 
+                            "defaultConfiguration":{"level":nativeSeverityToLevel(violatingPolicies['policySeverity'].lower())}}
+                        rules.append(rule)
+                        ruleIds.append(ruleId)
+                    ## Adding results for vulnerabilities
+                    result['message'] = {"text":f'{violatingPolicies["description"][:1000] if "description" in violatingPolicies else "-"}'}
+                    result['ruleId'] = ruleId
+                    locations = []
+                    #There might be several transient dependencies
+                    for dependencies in component["dependencyTrees"]:
+                        logging.debug(dependencies)
+                        if len(dependencies) > 0:
+                            component_to_find = dependencies[0]
+                            if len(dependencies) > 1:
+                                component_to_find = dependencies[1]
+                            fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
+                            if lineNumber: 
+                                locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath}'},"region":{"startLine":int(lineNumber)}}})
+                            else:
+                                locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
+                    result['locations'] = locations
+                    result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{violatingPolicies["policyName"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                    results.append(result)
+
+
+
 
     return results, rules
 
