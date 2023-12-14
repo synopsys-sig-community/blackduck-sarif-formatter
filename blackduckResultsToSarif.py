@@ -232,18 +232,6 @@ def getSeverityScore(vulnerability):
 
 def getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched):
     messageText = ""
-    messageText += f'## Component Licenses\n'
-    if "licenses" in component and len(component["licenses"]) > 0:
-        for license in component["licenses"]:
-            messageText += f'**License name:**\t{license["licenseDisplay"] if "licenseDisplay" in license else "-"}\n'
-            messageText += f'**License spdxId:**\t{license["spdxId"] if "spdxId" in license else "-"}\n'
-            messageText += f'**License family name:**\t{license["licenseFamilyName"] if "licenseFamilyName" in license else "-"}\n'
-            if "licenseType" in license and license["licenseType"] == "DISJUNCTIVE":
-                messageText += f'**Sub-Licenses:**\n'
-                for disjunctiveLicense in license["licenses"]:
-                    messageText += f'**License name:**\t{disjunctiveLicense["licenseDisplay"] if "licenseDisplay" in disjunctiveLicense else "-"}\n'
-                    messageText += f'**License spdxId:**\t{disjunctiveLicense["spdxId"] if "spdxId" in disjunctiveLicense else "-"}\n'
-                    messageText += f'**License family name:**\t{disjunctiveLicense["licenseFamilyName"] if "licenseFamilyName" in disjunctiveLicense else "-"}\n'
     messageText += f'## Policy description\n'
     messageText += f'**Policy name:**\t{policy_violation["name"] if "name" in policy_violation else "-"}\n'
     messageText += f'**Policy description:**\t{policy_violation["description"] if "description" in policy_violation else "-"}\n'
@@ -267,6 +255,20 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
                 messageText += f' {policy_violation["expression"]["operator"]} '
             index_expressions += 1
     messageText += f'\n\n[View component {component["componentName"]}]({component["componentVersion"]})'
+
+    messageText += f'## Component Licenses\n'
+    if "licenses" in component and len(component["licenses"]) > 0:
+        for license in component["licenses"]:
+            messageText += f'**License name:**\t{license["licenseDisplay"] if "licenseDisplay" in license else "-"}\n'
+            messageText += f'**License spdxId:**\t{license["spdxId"] if "spdxId" in license else "-"}\n'
+            messageText += f'**License family name:**\t{license["licenseFamilyName"] if "licenseFamilyName" in license else "-"}\n'
+            messageText += f'**License type:**\t{license["licenseType"] if "licenseType" in license else "-"}\n'
+            if "licenseType" in license and license["licenseType"] == "DISJUNCTIVE":
+                messageText += f'**Sub-Licenses:**\n'
+                for disjunctiveLicense in license["licenses"]:
+                    messageText += f'\t**License name:**\t{disjunctiveLicense["licenseDisplay"] if "licenseDisplay" in disjunctiveLicense else "-"}\n'
+                    messageText += f'\t**License spdxId:**\t{disjunctiveLicense["spdxId"] if "spdxId" in disjunctiveLicense else "-"}\n'
+                    messageText += f'\t**License family name:**\t{disjunctiveLicense["licenseFamilyName"] if "licenseFamilyName" in disjunctiveLicense else "-"}\n'
 
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
