@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.1.15"
+__versionro__="0.2.1"
 
 #Global variables
 args = "" 
@@ -22,25 +22,31 @@ MAX_LIMIT=1000
 
 toolName="Synopsys Black Duck Intelligent"
 supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
+dependency_cache = dict()
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
-    for dirpath, dirnames, filenames in os.walk(os.getcwd(), True):
-        re_patterns = []
-        for pattern in supportedPackageManagerFiles:
-            re_patterns.append(re.compile(pattern))
-        dependencyFiles = {e for e in filenames for pattern in re_patterns if re.search(pattern, e)}
-        for dependencyFile in dependencyFiles:
-            lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
-            if lineNumber:
-                filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
-                if filepath == "":
-                    logging.debug(f'dependency {dependency} found from {filepath}{dependencyFile} at line {lineNumber}')
-                    return dependencyFile, lineNumber
-                else:
-                    logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
-                    return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
-    logging.debug(f'dependency {dependency} not found!')
+    if dependency not in dependency_cache:
+        for dirpath, dirnames, filenames in os.walk(os.getcwd(), True):
+            re_patterns = []
+            for pattern in supportedPackageManagerFiles:
+                re_patterns.append(re.compile(pattern))
+            dependencyFiles = {e for e in filenames for pattern in re_patterns if re.search(pattern, e)}
+            for dependencyFile in dependencyFiles:
+                lineNumber = checkDependencyLineNro(f'{dirpath}{os.path.sep}{dependencyFile}', dependency)
+                if lineNumber:
+                    filepath = dirpath[re.search(re.escape(os.getcwd()), dirpath).end()+1::]
+                    if filepath == "":
+                        logging.debug(f'dependency {dependency} found from {filepath}{dependencyFile} at line {lineNumber}')
+                        dependency_cache[dependency] = {"file": dependencyFile, "line": lineNumber}
+                        return dependencyFile, lineNumber
+                    else:
+                        logging.debug(f'dependency {dependency} found from {filepath}{os.path.sep}{dependencyFile} at line {lineNumber}')
+                        dependency_cache[dependency] = {"file": f'{filepath}{os.path.sep}{dependencyFile}', "line": lineNumber}
+                        return f'{filepath}{os.path.sep}{dependencyFile}', lineNumber
+        logging.debug(f'dependency {dependency} not found!')
+    else:
+        return dependency_cache[dependency]['file'], dependency_cache[dependency]['line']
     return None, None
 
 def checkDependencyLineNro(filename, dependency):
@@ -117,6 +123,7 @@ def addFindings():
                                     policies.append(policy)
                 component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
                 ruleId = ""
+                # Creating sarif for vulnerabilities
                 if component_vulnerabilities and len(component_vulnerabilities) > 0:
                     for vulnerability in component_vulnerabilities:
                         vulnerability = get_vulnerability_overview(hub, vulnerability)
@@ -138,10 +145,29 @@ def addFindings():
                             result['locations'] = locations
                         result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                         results.append(result)
-                else:
-                    #There is no vulnerabilities in this component, but it has some kind of policy violation
-                    logging.debug(f"Component {component['componentName']} has no vulnerabilites, but has the policy violation!")
-                    #TODO create sarif output for those components which have only policy violations
+                # Creating sarif for policy violations
+                if policies and len(policies) > 0:
+                    for policy_violation in policies:
+                        # Creating sarif for LICENSE type of policy violations
+                        if policy_violation['category'] == "LICENSE":
+                            rule, result = {}, {}
+                            ruleId = f'{policy_violation["name"]+"-"+origin if origin else policy_violation["name"]}'
+                            ## Adding policy as a rule
+                            if not ruleId in ruleIds:
+                                rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'}, 
+                                    "fullDescription":{"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
+                                    "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched)},
+                                    "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": addLicenseTags()},
+                                    "defaultConfiguration":{"level":nativeSeverityToLevel(policy_violation['severity'].lower())}}
+                                rules.append(rule)
+                                ruleIds.append(ruleId)
+                            ## Adding results for policy violations
+                            result['message'] = {"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}'}
+                            result['ruleId'] = ruleId
+                            if locations and len(locations) > 0:
+                                result['locations'] = locations
+                            result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policy_violation["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                            results.append(result)
                 
     return results, rules
 
@@ -203,6 +229,64 @@ def checkLocations(hub,projectId,projectVersionId,component):
 
 def getSeverityScore(vulnerability):
     return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
+
+def getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched):
+    messageText = ""
+    messageText += f'## Policy description\n'
+    messageText += f'**Policy name:**\t{policy_violation["name"] if "name" in policy_violation else "-"}\n'
+    messageText += f'**Policy description:**\t{policy_violation["description"] if "description" in policy_violation else "-"}\n'
+    messageText += f'**Policy severity:**\t{policy_violation["severity"] if "severity" in policy_violation else "-"}\n\n'
+    messageText += "\n\n**Conditions**\n"
+    if "expression" in policy_violation and len(policy_violation["expression"]["expressions"]) > 0:
+        index_expressions = 1
+        for expression in policy_violation["expression"]["expressions"]:
+            messageText += f'{expression["displayName"]} {expression["operation"]} '
+            if "data" in expression["parameters"]:
+                index_data = 1
+                for data in expression["parameters"]["data"]:
+                    if "licenseFamilyName" in data:
+                        messageText += data["licenseFamilyName"]
+                    else:
+                        messageText += data["data"]
+                    if index_data < len(expression["parameters"]["data"]):
+                        messageText += ' AND '
+                    index_data += 1
+            if index_expressions < len(policy_violation["expression"]["expressions"]):
+                messageText += f' {policy_violation["expression"]["operator"]} '
+            index_expressions += 1
+    messageText += f'\n\n[View component {component["componentName"]}]({component["componentVersion"]})\n'
+
+    messageText += f'## Component Licenses\n'
+    if "licenses" in component and len(component["licenses"]) > 0:
+        for license in component["licenses"]:
+            messageText += f'**License name:**\t{license["licenseDisplay"] if "licenseDisplay" in license else "-"}\n'
+            messageText += f'**License spdxId:**\t{license["spdxId"] if "spdxId" in license else "-"}\n'
+            messageText += f'**License family name:**\t{license["licenseFamilyName"] if "licenseFamilyName" in license else "-"}\n'
+            messageText += f'**License type:**\t{license["licenseType"] if "licenseType" in license else "-"}\n'
+            if "licenseType" in license and license["licenseType"] == "DISJUNCTIVE":
+                messageText += f'**Sub-Licenses:**\n'
+                for disjunctiveLicense in license["licenses"]:
+                    messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**License name:**\t{disjunctiveLicense["licenseDisplay"] if "licenseDisplay" in disjunctiveLicense else "-"}\n'
+                    messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**License spdxId:**\t{disjunctiveLicense["spdxId"] if "spdxId" in disjunctiveLicense else "-"}\n'
+                    messageText += f'&nbsp;&nbsp;&nbsp;&nbsp;**License family name:**\t{disjunctiveLicense["licenseFamilyName"] if "licenseFamilyName" in disjunctiveLicense else "-"}\n\n'
+
+    if dependency_tree and len(dependency_tree) > 0:
+        messageText += "\n\n## Dependency tree\n"
+        for dependencyline in dependency_tree:
+            intents = ""
+            for dependency in dependencyline[::-1]:
+                messageText += f'{intents}* {dependency}\n'
+                intents += "    "
+    if dependency_tree_matched and len(dependency_tree_matched) > 0:
+        messageText += "\n\n## </>Source\n"
+        for dependencyline in dependency_tree_matched:
+            intents = ""
+            for dependencies in dependencyline.split('#')[::-1]:
+                for dependency in dependencies.split('!/'):
+                    if dependency:
+                        messageText += f'{intents}* {dependency}\n'
+                        intents += "    "
+    return messageText
 
 def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched):
     cvss_version = ""
@@ -309,6 +393,12 @@ def addTags(vulnerability):
     tags.append("security")
     return tags
 
+def addLicenseTags():
+    tags = []
+    tags.append("LICENSE_VIOLATION")
+    tags.append("security")
+    return tags
+
 def checkOrigin(component):
     if "origins" in component:
         if len(component["origins"]) > 0 and "externalId" in component["origins"][0]:
@@ -321,8 +411,11 @@ def nativeSeverityToLevel(argument):
         "blocker": "error", 
         "critical": "error", 
         "high": "error", 
+        "major": "error", 
         "medium": "warning", 
+        "minor": "warning", 
         "low": "note",
+        "trivial": "note",
         "info": "note",
         "unspecified": "note"
     }
@@ -334,8 +427,11 @@ def nativeSeverityToNumber(argument):
         "blocker": "9.8", 
         "critical": "9.1", 
         "high": "8.9", 
+        "major": "8.9", 
         "medium": "6.8", 
+        "minor": "6.8", 
         "low": "3.8",
+        "trivial": "3.8",
         "info": "1.0",
         "unspecified": "0.0",
     }
