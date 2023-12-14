@@ -254,7 +254,7 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
             if index_expressions < len(policy_violation["expression"]["expressions"]):
                 messageText += f' {policy_violation["expression"]["operator"]} '
             index_expressions += 1
-    messageText += f'\n\n[View component {component["componentName"]}]({component["componentVersion"]})'
+    messageText += f'\n\n[View component {component["componentName"]}]({component["componentVersion"]})\n'
 
     messageText += f'## Component Licenses\n'
     if "licenses" in component and len(component["licenses"]) > 0:
@@ -266,9 +266,9 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
             if "licenseType" in license and license["licenseType"] == "DISJUNCTIVE":
                 messageText += f'**Sub-Licenses:**\n'
                 for disjunctiveLicense in license["licenses"]:
-                    messageText += f'\t**License name:**\t{disjunctiveLicense["licenseDisplay"] if "licenseDisplay" in disjunctiveLicense else "-"}\n'
-                    messageText += f'\t**License spdxId:**\t{disjunctiveLicense["spdxId"] if "spdxId" in disjunctiveLicense else "-"}\n'
-                    messageText += f'\t**License family name:**\t{disjunctiveLicense["licenseFamilyName"] if "licenseFamilyName" in disjunctiveLicense else "-"}\n'
+                    messageText += f'   **License name:**\t{disjunctiveLicense["licenseDisplay"] if "licenseDisplay" in disjunctiveLicense else "-"}\n'
+                    messageText += f'   **License spdxId:**\t{disjunctiveLicense["spdxId"] if "spdxId" in disjunctiveLicense else "-"}\n'
+                    messageText += f'   **License family name:**\t{disjunctiveLicense["licenseFamilyName"] if "licenseFamilyName" in disjunctiveLicense else "-"}\n\n'
 
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
