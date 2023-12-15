@@ -246,10 +246,14 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
                 for data in expression["parameters"]["data"]:
                     if "licenseFamilyName" in data:
                         messageText += data["licenseFamilyName"]
-                    else:
+                    elif "licenseName" in data:
+                        messageText += data["licenseName"]
+                    elif "data" in data:
                         messageText += data["data"]
+                    else:
+                        messageText += "-"
                     if index_data < len(expression["parameters"]["data"]):
-                        messageText += ' AND '
+                        messageText += ', '
                     index_data += 1
             if index_expressions < len(policy_violation["expression"]["expressions"]):
                 messageText += f' {policy_violation["expression"]["operator"]} '
