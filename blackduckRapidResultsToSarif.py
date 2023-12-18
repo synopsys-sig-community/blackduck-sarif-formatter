@@ -108,8 +108,8 @@ def addFindings():
                 ruleId = vulnerability["name"]
                 ## Adding vulnerabilities as a rule
                 if not ruleId in ruleIds:
-                    rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
-                        "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
+                    rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
+                        "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                         "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(component, vulnerability)},
                         "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, None)},
                         "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['vulnSeverity'].lower())}}
@@ -143,8 +143,8 @@ def addFindings():
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
                             logging.debug(violatingPolicies)
-                            rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{violatingPolicies["policyName"]}: {component["componentName"]}'}, 
-                                "fullDescription":{"text":f'{violatingPolicies["description"][:1000] if "description" in violatingPolicies else "-"}', "markdown": f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}'},
+                            rule = {"id":ruleId, "helpUri": licenseViolation['_meta']['href'], "shortDescription":{"text":f'{violatingPolicies["policyName"]}: {component["componentName"]}'}[:900], 
+                                "fullDescription":{"text":f'{violatingPolicies["description"][:900] if "description" in violatingPolicies else "-"}', "markdown": f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}'},
                                 "help":{"text":f'{violatingPolicies["description"] if "description" in violatingPolicies else "-"}', "markdown": getHelpMarkdownLicense(component, licenseViolation)},
                                 "properties": {"security-severity": nativeSeverityToNumber(violatingPolicies['policySeverity'].lower()), "tags": addLicenseTags()}, 
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(violatingPolicies['policySeverity'].lower())}}
