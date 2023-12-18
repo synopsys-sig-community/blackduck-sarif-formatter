@@ -131,8 +131,8 @@ def addFindings():
                         ruleId = f'{vulnerability["name"]+"-"+origin if origin else vulnerability["name"]}'
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
-                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'}, 
-                                "fullDescription":{"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
+                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:1024]}, 
+                                "fullDescription":{"text":f'{vulnerability["description"][:1024] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                                 "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched)},
                                 "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
@@ -154,8 +154,8 @@ def addFindings():
                             ruleId = f'{policy_violation["name"]+"-"+origin if origin else policy_violation["name"]}'
                             ## Adding policy as a rule
                             if not ruleId in ruleIds:
-                                rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'}, 
-                                    "fullDescription":{"text":f'{policy_violation["description"][:1000] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
+                                rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'[:1024]}, 
+                                    "fullDescription":{"text":f'{policy_violation["description"][:1024] if "description" in policy_violation else "-"}', "markdown": f'{policy_violation["description"] if "description" in policy_violation else "-"}'},
                                     "help":{"text":f'{policy_violation["description"] if "description" in policy_violation else "-"}', "markdown": getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched)},
                                     "properties": {"security-severity": nativeSeverityToNumber(policy_violation['severity'].lower()), "tags": addLicenseTags()},
                                     "defaultConfiguration":{"level":nativeSeverityToLevel(policy_violation['severity'].lower())}}
