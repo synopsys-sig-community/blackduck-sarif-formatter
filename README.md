@@ -25,7 +25,7 @@ By setting the detect.cleanup to false, you will prevent Black Duck to remove th
 | blackduck_apiToken | Black Duck Access token | - | true |
 | blackduck_project | Black Duck project name | ${{github.repository}} | false |
 | blackduck_version | Black Duck project version name | ${{github.ref_name}} | false |
-| blackduck_policy_categories | Comma separated list of policy categories, which violations will affect. Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL] | SECURITY | false |
+| blackduck_policy_categories | Comma separated list of policy categories, which violations will affect. Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL] | SECURITY,LICENSE | false |
 | blackduck_outputFile | Filename with path where it will be created, example: github.workspace/blackduckFindings.sarif.json | ${{github.workspace}}/blackduckFindings.sarif.json | false
 | blackduck_policies | If given, policy information is added | false | false |
 | blackduck_scan_full | false for rapid scan results and true for intelligent scan | false | false |
