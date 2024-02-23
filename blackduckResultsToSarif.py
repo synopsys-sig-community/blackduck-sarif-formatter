@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.1"
+__versionro__="0.2.2"
 
 #Global variables
 args = "" 
@@ -134,8 +134,8 @@ def addFindings():
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                                 "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched)},
-                                "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability)},
-                                "defaultConfiguration":{"level":nativeSeverityToLevel(vulnerability['severity'].lower())}}
+                                "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability)},
+                                "defaultConfiguration":{"level":nativeSeverityToLevel(getSeverity(vulnerability).lower())}}
                             rules.append(rule)
                             ruleIds.append(ruleId)
                         ## Adding results for vulnerabilities
@@ -168,8 +168,55 @@ def addFindings():
                                 result['locations'] = locations
                             result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policy_violation["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                             results.append(result)
-                
+        if args.add_iac:
+            iac_results = getIACFindings(hub, projectId, projectVersionId)
+            if len(iac_results) > 0:
+                for iac_result in iac_results:
+                    if not iac_result["ignored"]:
+                        iac_locations = []
+                        rule, result = {}, {}
+                        ruleId = f'{iac_result["checkerId"]+"-"+iac_result["fileName"] if "fileName" in iac_result else iac_result["checkerId"]}'
+                        ## Adding policy as a rule
+                        if not ruleId in ruleIds:
+                            rule = {"id":ruleId, "helpUri": iac_result['_meta']['href'], "shortDescription":{"text":f'{iac_result["summary"]} in {iac_result["fileName"]}'[:900]}, 
+                                "fullDescription":{"text":f'{iac_result["description"][:900] if "description" in iac_result else "-"}', "markdown": f'{iac_result["description"] if "description" in iac_results else "-"}'},
+                                "help":{"text":f'{iac_result["description"] if "description" in iac_result else "-"}', "markdown": getHelpMarkdownIAC(iac_result)},
+                                "properties": {"security-severity": nativeSeverityToNumber(iac_result['severity']['level'].lower()), "tags": addIACTags()},
+                                "defaultConfiguration":{"level":nativeSeverityToLevel(iac_result['severity']["level"].lower())}}
+                            rules.append(rule)
+                            ruleIds.append(ruleId)
+                        ## Adding results for policy violations
+                        result['message'] = {"text":f'{iac_result["description"][:1000] if "description" in iac_result else "-"}'}
+                        result['ruleId'] = ruleId
+                        iac_locations.append({"physicalLocation":{"artifactLocation":{"uri": iac_result["filePath"]},"region":{"startLine":int(iac_result["location"]["start"]["line"])}}})
+                        if iac_locations and len(iac_locations) > 0:
+                            result['locations'] = iac_locations
+                        result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{iac_result["checkerId"]}{iac_result["fileName"]}').encode(encoding='UTF-8')).hexdigest()}
+                        results.append(result)
     return results, rules
+
+def getIACFindings(hub, projectId, projectVersionId):
+    MAX_LIMT_IAC = 25
+    all_iac_findings = []
+    url = f"{hub.get_urlbase()}/api/projects/{projectId}/versions/{projectVersionId}/iac-issues?limit={MAX_LIMT_IAC}&offset=0"
+    headers = hub.get_headers()
+    headers['Accept'] = 'application/vnd.blackducksoftware.internal-1+json, application/json'
+    response = requests.get(url, headers=headers, verify = not hub.config['insecure'])
+    if response.status_code == 200:
+        result = response.json()
+        if "totalCount" in result:
+            total = result["totalCount"]
+            all_iac_findings = result["items"]
+            downloaded = MAX_LIMT_IAC
+            while total > downloaded:
+                logging.debug(f"getting next page {downloaded}/{total}")
+                url = f"{hub.get_urlbase()}/api/projects/{projectId}/versions/{projectVersionId}/iac-issues?limit={MAX_LIMT_IAC}&offset={downloaded}"
+                headers = hub.get_headers()
+                headers['Accept'] = 'application/vnd.blackducksoftware.internal-1+json, application/json'
+                response = requests.get(url, headers=headers, verify = not hub.config['insecure'])
+                all_iac_findings.extend(response.json()['items'])
+                downloaded += MAX_LIMT_IAC
+    return all_iac_findings
 
 def getDependenciesForComponent(hub, projectId, projectVersionId, component):
     dependencies = []
@@ -227,8 +274,36 @@ def checkLocations(hub,projectId,projectVersionId,component):
         locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
     return locations, dependency_tree, dependency_tree_matched
 
+def getSeverity(vulnerability):
+    if "severity" in vulnerability:
+        return vulnerability["severity"]
+    elif "cvss3" in vulnerability:
+        return vulnerability["cvss3"]["severity"]
+    elif "cvss2" in vulnerability:
+        return vulnerability["cvss2"]["severity"]
+    else:
+        return "unspecified"
+
 def getSeverityScore(vulnerability):
-    return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(vulnerability["severity"].lower())}'
+    return f'{vulnerability["overallScore"] if "overallScore" in vulnerability else nativeSeverityToNumber(getSeverity(vulnerability).lower())}'
+
+def getHelpMarkdownIAC(iac_result):
+    messageText = ""
+    if iac_result:
+        messageText += f'## {iac_result["summary"]}\n'
+        messageText += f'{iac_result["description"] if "description" in iac_result else "-"}\n'
+        messageText += f'## Severity\n'
+        messageText += f'**Level:** {iac_result["severity"]["level"] if "severity" in iac_result else "-"}\t'
+        messageText += f'**Impact:** {iac_result["severity"]["impact"] if "severity" in iac_result else "-"}\t'
+        messageText += f'**Likelihood:** {iac_result["severity"]["likelihood"] if "severity" in iac_result else "-"}\n'
+        messageText += f'## Remediation\n'
+        messageText += f'{iac_result["remediation"] if "remediation" in iac_result else "-"}\n'
+        messageText += f'## Location\n'
+        messageText += f'**File Path:** {iac_result["filePath"] if "filePath" in iac_result else "-"}\n'
+        messageText += f'**Start:** Line: {str(iac_result["location"]["start"]["line"]) +",  Column: "+ str(iac_result["location"]["start"]["column"]) if "location" in iac_result else "-"}\n'
+        messageText += f'**End:** Line: {str(iac_result["location"]["end"]["line"]) +", Column: "+ str(iac_result["location"]["end"]["column"]) if "location" in iac_result else "-"}'
+
+    return messageText
 
 def getHelpMarkdownLicense(component, policy_violation, dependency_tree, dependency_tree_matched):
     messageText = ""
@@ -406,6 +481,12 @@ def addLicenseTags():
     tags.append("security")
     return tags
 
+def addIACTags():
+    tags = []
+    tags.append("IAC")
+    tags.append("security")
+    return tags
+
 def checkOrigin(component):
     if "origins" in component:
         if len(component["origins"]) > 0 and "externalId" in component["origins"][0]:
@@ -476,6 +557,7 @@ if __name__ == '__main__':
         parser.add_argument('--policyCategories', help="Comma separated list of policy categories, which violations will affect. \
             Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
+        parser.add_argument('--add_iac', help="true, iac findings are added", default=False, type=str2bool)
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"
