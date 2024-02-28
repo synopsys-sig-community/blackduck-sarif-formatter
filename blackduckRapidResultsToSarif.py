@@ -14,7 +14,7 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.1"
+__versionro__="0.2.3"
 
 #Global variables
 args = "" 
@@ -274,6 +274,7 @@ def addTags(vulnerability, policy_name):
         tags.append(policy_name)
     if "vendorFixDate" in vulnerability:
         tags.append("official_fix")
+    tags.append("SCA")
     tags.append("security")
     return tags
 

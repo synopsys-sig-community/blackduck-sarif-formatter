@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.2"
+__versionro__="0.2.3"
 
 #Global variables
 args = "" 
@@ -472,6 +472,7 @@ def addTags(vulnerability):
         if "temporalMetrics" in vulnerability[cvss_version]:
             if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
                 tags.append("official_fix")
+    tags.append("SCA")
     tags.append("security")
     return tags
 
