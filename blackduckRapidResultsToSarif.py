@@ -105,7 +105,7 @@ def addFindings():
         for component in components:
             for vulnerability in component["policyViolationVulnerabilities"]:
                 rule, result = {}, {}
-                ruleId = vulnerability["name"]
+                ruleId = f'{vulnerability["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
                 ## Adding vulnerabilities as a rule
                 if not ruleId in ruleIds:
                     rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
