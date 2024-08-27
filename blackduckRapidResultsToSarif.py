@@ -57,7 +57,7 @@ def checkDependencyLineNro(filename, dependency):
 
 def get_rapid_scan_results():
     hub = HubInstance(args.url, api_token=args.token, insecure=False)
-    filelist = glob.glob(args.scanOutputPath + "/*.json")
+    filelist = get_rapid_result_files(args.scanOutputPath)
     if filelist:
         if len(filelist) <= 0:
             return None
@@ -79,6 +79,15 @@ def get_rapid_scan_results():
         return rapid_scan_results
     else:
         raise Exception("Didn't find any RAPID scan result json files. Note, that you need to give --detect.cleanup=false, so that results are not removed after scan is done.")
+
+def get_rapid_result_files(startingpoint):
+    allDeveloperScanResultFiles = []
+    for dirpath, dirnames, filenames in os.walk(startingpoint, True):
+        developerScanResultFiles = {e for e in filenames for pattern in [".\SBlackDuck_DeveloperMode_Result.json"] if re.search(pattern, e)}
+        if developerScanResultFiles and len(developerScanResultFiles) > 0:
+            for developerFile in developerScanResultFiles:
+                allDeveloperScanResultFiles.append(os.path.join(dirpath, developerFile))
+    return allDeveloperScanResultFiles
 
 def get_json(hub, url):
     url += f'?limit={MAX_LIMIT}'
