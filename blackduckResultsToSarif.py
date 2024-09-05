@@ -561,7 +561,7 @@ if __name__ == '__main__':
             Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
         parser.add_argument('--add_iac', help="true, iac findings are added", default=False, type=str2bool)
-        parser.add_argument('--toolNameforSarif', help="Tool name for sarif", default="Synopsys Black Duck Intelligent")
+        parser.add_argument('--toolNameforSarif', help="Tool name for sarif", default="Synopsys Black Duck Intelligent", required=False)
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"

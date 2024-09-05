@@ -366,7 +366,7 @@ if __name__ == '__main__':
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
         parser.add_argument('--policyCategories', help="Comma separated list of policy categories, which violations will affect. \
             Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
-        parser.add_argument('--toolNameforSarif', help="Tool name for sarif", default="Synopsys Black Duck Rapid")
+        parser.add_argument('--toolNameforSarif', help="Tool name for sarif", default="Synopsys Black Duck Rapid", required=False)
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"
