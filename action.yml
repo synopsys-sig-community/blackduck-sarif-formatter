@@ -65,10 +65,10 @@ runs:
     - if: ${{inputs.blackduck_scan_full == 'true'}}
       run: |
         pip3 install blackduck requests
-        python3 ${{github.action_path}}/blackduckResultsToSarif.py --toolNameforSarif=${{inputs.blackduck_toolname_for_sarif_full}} --add_iac=${{inputs.blackduck_iac}} --policies=${{inputs.blackduck_policies}} --outputFile=${{inputs.blackduck_outputFile}} --url=${{inputs.blackduck_url}} --token=${{inputs.blackduck_apiToken}} --project=${{inputs.blackduck_project}} --version=${{inputs.blackduck_version}} --policyCategories="${{inputs.blackduck_policy_categories}}" --log_level=${{inputs.blackduck_log_level}}
+        python3 ${{github.action_path}}/blackduckResultsToSarif.py --toolNameforSarif="${{inputs.blackduck_toolname_for_sarif_full}}" --add_iac=${{inputs.blackduck_iac}} --policies=${{inputs.blackduck_policies}} --outputFile=${{inputs.blackduck_outputFile}} --url=${{inputs.blackduck_url}} --token=${{inputs.blackduck_apiToken}} --project=${{inputs.blackduck_project}} --version=${{inputs.blackduck_version}} --policyCategories="${{inputs.blackduck_policy_categories}}" --log_level=${{inputs.blackduck_log_level}}
       shell: bash
     - if: ${{inputs.blackduck_scan_full == 'false'}}
       run: |
         pip3 install blackduck
-        python3 ${{github.action_path}}/blackduckRapidResultsToSarif.py --toolNameforSarif=${{inputs.blackduck_toolname_for_sarif_rapid}} --scanOutputPath=${{inputs.blackduck_scanOutputPath}} --policies=${{inputs.blackduck_policies}} --outputFile=${{inputs.blackduck_outputFile}} --url=${{inputs.blackduck_url}} --token=${{inputs.blackduck_apiToken}} --policyCategories="${{inputs.blackduck_policy_categories}}" --log_level=${{inputs.blackduck_log_level}}
+        python3 ${{github.action_path}}/blackduckRapidResultsToSarif.py --toolNameforSarif="${{inputs.blackduck_toolname_for_sarif_rapid}}" --scanOutputPath=${{inputs.blackduck_scanOutputPath}} --policies=${{inputs.blackduck_policies}} --outputFile=${{inputs.blackduck_outputFile}} --url=${{inputs.blackduck_url}} --token=${{inputs.blackduck_apiToken}} --policyCategories="${{inputs.blackduck_policy_categories}}" --log_level=${{inputs.blackduck_log_level}}
       shell: bash
