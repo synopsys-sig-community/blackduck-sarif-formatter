@@ -128,7 +128,7 @@ def addFindings():
                     for vulnerability in component_vulnerabilities:
                         vulnerability = get_vulnerability_overview(hub, vulnerability)
                         rule, result = {}, {}
-                        ruleId = f'COMPONENT:{vulnerability["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
+                        ruleId = f'{vulnerability["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
@@ -151,7 +151,7 @@ def addFindings():
                         # Creating sarif for LICENSE type of policy violations
                         if policy_violation['category'] == "LICENSE":
                             rule, result = {}, {}
-                            ruleId = f'LICENSE:{policy_violation["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
+                            ruleId = f'POLICY:{policy_violation["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
                             ## Adding policy as a rule
                             if not ruleId in ruleIds:
                                 rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'[:900]}, 
