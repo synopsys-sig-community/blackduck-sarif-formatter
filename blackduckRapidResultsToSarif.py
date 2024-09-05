@@ -14,12 +14,11 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.3"
+__versionro__="0.2.4"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
-toolName="Synopsys Black Duck Rapid"
 supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
 
@@ -367,6 +366,7 @@ if __name__ == '__main__':
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
         parser.add_argument('--policyCategories', help="Comma separated list of policy categories, which violations will affect. \
             Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
+        parser.add_argument('--toolNameforSarif', help="Tool name for sarif", default="Synopsys Black Duck Rapid")
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"
@@ -381,7 +381,7 @@ if __name__ == '__main__':
         sarif_json = getSarifJsonHeader()
         results = {}
         results['results'] = findings
-        results['tool'] = getSarifJsonFooter(toolName, rules)
+        results['tool'] = getSarifJsonFooter(args.toolNameforSarif, rules)
         runs = []
         runs.append(results)
         sarif_json['runs'] = runs

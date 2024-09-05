@@ -14,13 +14,12 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.3"
+__versionro__="0.2.4"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
 
-toolName="Synopsys Black Duck Intelligent"
 supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
 
@@ -114,6 +113,7 @@ def addFindings():
                 # logging.debug(f'component: {component}')
                 policies = []
                 if args.policies:
+                    logging.info("Adding policies..")
                     policy_status = getLinksData(hub, component, "policy-status")
                     if policy_status:
                         policy_rules = getPolicyRules(hub, policy_status)
@@ -121,6 +121,7 @@ def addFindings():
                             for policy in policy_rules:
                                 if policy["category"] in args.policyCategories.split(','): 
                                     policies.append(policy)
+                    logging.info(f"found: {policies} policies")
                 component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
                 ruleId = ""
                 # Creating sarif for vulnerabilities
@@ -152,6 +153,7 @@ def addFindings():
                         if policy_violation['category'] == "LICENSE":
                             rule, result = {}, {}
                             ruleId = f'POLICY:{policy_violation["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
+                            logging.info(f'adding rule for policy: {ruleId}')
                             ## Adding policy as a rule
                             if not ruleId in ruleIds:
                                 rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'[:900]}, 
@@ -559,6 +561,7 @@ if __name__ == '__main__':
             Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
         parser.add_argument('--add_iac', help="true, iac findings are added", default=False, type=str2bool)
+        parser.add_argument('--toolNameforSarif', help="Tool name for sarif", default="Synopsys Black Duck Intelligent")
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"
@@ -572,7 +575,7 @@ if __name__ == '__main__':
         sarif_json = getSarifJsonHeader()
         results = {}
         results['results'] = findings
-        results['tool'] = getSarifJsonFooter("Synopsys Black Duck Intelligent", rules)
+        results['tool'] = getSarifJsonFooter(args.toolNameforSarif, rules)
         runs = []
         runs.append(results)
         sarif_json['runs'] = runs
