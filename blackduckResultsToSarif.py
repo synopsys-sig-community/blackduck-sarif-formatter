@@ -60,7 +60,7 @@ def get_vulnerability_overview(hub, vulnerability):
     return hub.execute_get(vulnerability['_meta']['href']).json()
 
 def get_version_components(hub, projectversion, limit=MAX_LIMIT):
-    parameters={"filter":f'{createFilterForCompoents()}', "limit": limit}
+    parameters={"filter":f'{createFilterForComponents()}', "limit": limit}
     url = projectversion['_meta']['href'] + "/components"
     headers = hub.get_headers()
     headers['Accept'] = 'application/vnd.blackducksoftware.bill-of-materials-6+json'
@@ -76,7 +76,7 @@ def get_Dependency_paths(hub, projectID, projectversionID, originID):
     jsondata = response.json()
     return jsondata
 
-def createFilterForCompoents():
+def createFilterForComponents():
     policyCategories = args.policyCategories.split(',')
     policyCategoryOptions = ""
     for policyCategory in policyCategories:
