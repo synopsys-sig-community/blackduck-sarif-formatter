@@ -109,11 +109,8 @@ def addFindings():
         for component in components:
             if not component['componentType'] == "SUB_PROJECT":
                 locations, dependency_tree, dependency_tree_matched = checkLocations(hub, projectId, projectVersionId, component)
-                origin = checkOrigin(component)
-                # logging.debug(f'component: {component}')
                 policies = []
                 if args.policies:
-                    logging.info("Adding policies..")
                     policy_status = getLinksData(hub, component, "policy-status")
                     if policy_status:
                         policy_rules = getPolicyRules(hub, policy_status)
@@ -121,7 +118,6 @@ def addFindings():
                             for policy in policy_rules:
                                 if policy["category"] in args.policyCategories.split(','): 
                                     policies.append(policy)
-                    logging.info(f"found: {policies} policies")
                 component_vulnerabilities = getLinksData(hub, component, "vulnerabilities")['items']
                 ruleId = ""
                 # Creating sarif for vulnerabilities
@@ -153,7 +149,6 @@ def addFindings():
                         if policy_violation['category'] == "LICENSE":
                             rule, result = {}, {}
                             ruleId = f'POLICY:{policy_violation["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
-                            logging.info(f'adding rule for policy: {ruleId}')
                             ## Adding policy as a rule
                             if not ruleId in ruleIds:
                                 rule = {"id":ruleId, "helpUri": policy_violation['_meta']['href'], "shortDescription":{"text":f'{policy_violation["name"]}: {component["componentName"]}'[:900]}, 
