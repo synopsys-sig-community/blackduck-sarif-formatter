@@ -302,7 +302,7 @@ def getHelpMarkdownIAC(iac_result):
         # METADATA for birectional connection
         messageText += "\n\n## Metadata\n"
         messageText += "**Black Duck Issue Type:** IAC\n"
-        messageText += f"**Black Duck IaC Checker:** {iac_result["checkerId"]}"
+        messageText += f"**Black Duck IaC Checker:** {iac_result['checkerId']}"
 
     return messageText
 
