@@ -299,6 +299,10 @@ def getHelpMarkdownIAC(iac_result):
         messageText += f'**File Path:** {iac_result["filePath"] if "filePath" in iac_result else "-"}\n'
         messageText += f'**Start:** Line: {str(iac_result["location"]["start"]["line"]) +",  Column: "+ str(iac_result["location"]["start"]["column"]) if "location" in iac_result else "-"}\n'
         messageText += f'**End:** Line: {str(iac_result["location"]["end"]["line"]) +", Column: "+ str(iac_result["location"]["end"]["column"]) if "location" in iac_result else "-"}'
+        # METADATA for birectional connection
+        messageText += "\n\n## Metadata\n"
+        messageText += "**Black Duck Issue Type:** IAC\n"
+        messageText += f"**Black Duck IaC Checker:** {iac_result["checkerId"]}"
 
     return messageText
 
@@ -365,6 +369,12 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
                     if dependency:
                         messageText += f'{intents}* {dependency}\n'
                         intents += "    "
+    # METADATA for birectional connection
+    messageText += "\n\n## Metadata\n"
+    messageText += "**Black Duck Issue Type:** POLICY\n"
+    messageText += f"**Black Duck Policy Name:** {policy_violation['name']}\n"
+    messageText += f"**Black Duck Component Name:** {component['componentName']}\n"
+    messageText += f"**Black Duck Component Version:** {component['componentVersionName']}"
     return messageText
 
 def getHelpMarkdown(policies, component, vulnerability, dependency_tree, dependency_tree_matched):
