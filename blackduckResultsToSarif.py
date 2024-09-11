@@ -131,7 +131,9 @@ def addFindings():
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                                 "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched)},
-                                "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability)},
+                                "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability),
+                                               "issue_type": "SECURITY", "blackduck_vulnerability_name": vulnerability["name"], "blackduck_component_name": component["componentName"],
+                                               "blackduck_component_version_name": component["componentVersionName"]},
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(getSeverity(vulnerability).lower())}}
                             rules.append(rule)
                             ruleIds.append(ruleId)
