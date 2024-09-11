@@ -445,10 +445,10 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
                 messageText += f'* Common Weakness Enumeration: [{cwe}](https://cwe.mitre.org/data/definitions/{cwe.split("-")[-1]}.html)\n'
     # METADATA for birectional connection
     messageText += "\n\n## Metadata\n"
-    messageText += "Black Duck Issue Type: SECURITY\n"
-    messageText += f"Black Duck Vulnerability Name: {vulnerability['name']}\n"
-    messageText += f"Black Duck Component Name: {component['componentName']}\n"
-    messageText += f"Black Duck Component Version: {component['componentVersionName']}"
+    messageText += "**Black Duck Issue Type:** SECURITY\n"
+    messageText += f"**Black Duck Vulnerability Name:** {vulnerability['name']}\n"
+    messageText += f"**Black Duck Component Name:** {component['componentName']}\n"
+    messageText += f"**Black Duck Component Version:** {component['componentVersionName']}"
     return messageText
 
 def getDate(vulnerability, whichDate):
