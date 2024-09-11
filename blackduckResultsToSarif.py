@@ -130,10 +130,8 @@ def addFindings():
                         if not ruleId in ruleIds:
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched)},
-                                "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability),
-                                               "issue_type": "SECURITY", "blackduck_vulnerability_name": vulnerability["name"], "blackduck_component_name": component["componentName"],
-                                               "blackduck_component_version_name": component["componentVersionName"]},
+                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, component, vulnerability, dependency_tree, dependency_tree_matched)},
+                                "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability)},
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(getSeverity(vulnerability).lower())}}
                             rules.append(rule)
                             ruleIds.append(ruleId)
@@ -369,7 +367,7 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
                         intents += "    "
     return messageText
 
-def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_matched):
+def getHelpMarkdown(policies, component, vulnerability, dependency_tree, dependency_tree_matched):
     cvss_version = ""
     if "cvss3" in vulnerability:
         cvss_version = "cvss3"
@@ -445,6 +443,12 @@ def getHelpMarkdown(policies, vulnerability, dependency_tree, dependency_tree_ma
             if metadata['rel'] == "cwes":
                 cwe = metadata["href"].split("/")[-1]
                 messageText += f'* Common Weakness Enumeration: [{cwe}](https://cwe.mitre.org/data/definitions/{cwe.split("-")[-1]}.html)\n'
+    # METADATA for birectional connection
+    messageText += "\n\n## Metadata\n"
+    messageText += "issue_type=SECURITY\n"
+    messageText += f"blackduck_vulnerability_name={vulnerability['name']}\n"
+    messageText += f"blackduck_component_name={component['componentName']}\n"
+    messageText += f"blackduck_component_version_name={component['componentVersionName']}"
     return messageText
 
 def getDate(vulnerability, whichDate):
