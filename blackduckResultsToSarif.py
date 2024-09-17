@@ -302,6 +302,8 @@ def getHelpMarkdownIAC(iac_result):
         # METADATA for birectional connection
         messageText += "\n\n## Metadata\n"
         messageText += "**Black Duck Issue Type:** IAC\n"
+        messageText += f"**Black Duck Project Name:** {args.project}\n"
+        messageText += f"**Black Duck Project Version Name:** {args.version}\n"
         messageText += f"**Black Duck IaC Checker:** {iac_result['checkerId']}"
 
     return messageText
@@ -372,6 +374,8 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
     # METADATA for birectional connection
     messageText += "\n\n## Metadata\n"
     messageText += "**Black Duck Issue Type:** POLICY\n"
+    messageText += f"**Black Duck Project Name:** {args.project}\n"
+    messageText += f"**Black Duck Project Version Name:** {args.version}\n"
     messageText += f"**Black Duck Policy Name:** {policy_violation['name']}\n"
     messageText += f"**Black Duck Component Name:** {component['componentName']}\n"
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}"
@@ -456,6 +460,8 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     # METADATA for birectional connection
     messageText += "\n\n## Metadata\n"
     messageText += "**Black Duck Issue Type:** SECURITY\n"
+    messageText += f"**Black Duck Project Name:** {args.project}\n"
+    messageText += f"**Black Duck Project Version Name:** {args.version}\n"
     messageText += f"**Black Duck Vulnerability Name:** {vulnerability['name']}\n"
     messageText += f"**Black Duck Component Name:** {component['componentName']}\n"
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}"
