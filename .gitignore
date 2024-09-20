@@ -9,3 +9,4 @@ version.json
 full_result.sarif.json
 sampleapp_rapid_component_results.json
 iac_findings.json
+sampleapp.sarif.json
