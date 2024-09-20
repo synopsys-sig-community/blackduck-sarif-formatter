@@ -464,9 +464,8 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     messageText += f"**Black Duck Project Version Name:** {args.version}\n"
     messageText += f"**Black Duck Vulnerability Name:** {vulnerability['name']}\n"
     messageText += f"**Black Duck Component Name:** {component['componentName']}\n"
-    messageText += f"**Black Duck Component Version:** {component['componentVersionName']}"
+    messageText += f"**Black Duck Component Version:** {component['componentVersionName']}\n"
     if "origins" in component and len(component["origins"]) > 0:
-        logging.debug(f'Origins: {component["origins"]}')
         messageText += f"**Black Duck Component Origin:** {component['origins'][0]['externalId']}"
     return messageText
 
