@@ -510,12 +510,12 @@ def addTags(vulnerability):
         else:
             cvss_version = "cvss2"
         if "impactSubscore" in vulnerability[cvss_version]:
-            tags.append(f'Impact: {cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"])}')
+            tags.append(f'Impact {cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"])}')
         if "exploitabilitySubscore" in vulnerability[cvss_version]:
-            tags.append(f'Exploitability: {cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"])}')
+            tags.append(f'Exploitability {cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "score" in vulnerability[cvss_version]['temporalMetrics']:
-                tags.append(f'Temporal: {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score'])}')
+                tags.append(f'Temporal {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score'])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "remediationLevel" in vulnerability[cvss_version]['temporalMetrics']:
                 tags.append(f"{vulnerability[cvss_version]['temporalMetrics']['remediationLevel']}")
