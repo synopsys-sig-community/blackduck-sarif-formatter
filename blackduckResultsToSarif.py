@@ -520,7 +520,14 @@ def addTags(vulnerability):
                 tags.append(f'Temporal {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score'])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "remediationLevel" in vulnerability[cvss_version]['temporalMetrics']:
-                tags.append(f"{vulnerability[cvss_version]['temporalMetrics']['remediationLevel']}")
+                if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == "WORKAROUND":
+                    tags.append("workaround available")
+                elif vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == "OFFICIAL_FIX":
+                    tags.append("patch available")
+                elif vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == "TEMPORARY_FIX":
+                    tags.append("temporary patch available")
+        if vulnerability["workaround"]:
+            tags.append("workaround available")
     tags.append("SCA")
     tags.append("security")
     return tags
