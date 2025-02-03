@@ -389,19 +389,19 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
         cvss_version = "cvss2"
     vector = f'{vulnerability[cvss_version]["vector"] if "vector" in vulnerability[cvss_version] else ""}'
     attackVector = f'{vulnerability[cvss_version]["attackVector"] if "attackVector" in vulnerability[cvss_version] else ""}'
-    attackComplexity = f'{vulnerability[cvss_version]["attackComplexity"] if "attackComplexity" in vulnerability[cvss_version] else ""}'
-    confidentialityImpact = f'{vulnerability[cvss_version]["confidentialityImpact"] if "confidentialityImpact" in vulnerability[cvss_version] else ""}'
-    integrityImpact = f'{vulnerability[cvss_version]["integrityImpact"] if "integrityImpact" in vulnerability[cvss_version] else ""}'
-    availabilityImpact = f'{vulnerability[cvss_version]["availabilityImpact"] if "availabilityImpact" in vulnerability[cvss_version] else ""}'
+    attackComplexity = f'{add_square(vulnerability[cvss_version]["attackComplexity"]) if "attackComplexity" in vulnerability[cvss_version] else ""}'
+    confidentialityImpact = f'{add_square(vulnerability[cvss_version]["confidentialityImpact"]) if "confidentialityImpact" in vulnerability[cvss_version] else ""}'
+    integrityImpact = f'{add_square(vulnerability[cvss_version]["integrityImpact"]) if "integrityImpact" in vulnerability[cvss_version] else ""}'
+    availabilityImpact = f'{add_square(vulnerability[cvss_version]["availabilityImpact"]) if "availabilityImpact" in vulnerability[cvss_version] else ""}'
     privilegesRequired = f'{vulnerability[cvss_version]["privilegesRequired"] if "privilegesRequired" in vulnerability[cvss_version] else ""}'
     scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability[cvss_version] else ""}'
     userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability[cvss_version] else ""}'
-    exploitability = "-"
-    remediationLevel = "-"
-    reportConfidence = "-"
-    impactSubscore = "-"
-    exploitabilitySubscore = "-"
-    temporalMetrics = "-"
+    exploitability = "****"
+    remediationLevel = "****"
+    reportConfidence = "****"
+    impactSubscore = "****"
+    exploitabilitySubscore = "****"
+    temporalMetrics = "****"
     if "temporalMetrics" in vulnerability[cvss_version]:
         if "exploitability" in vulnerability[cvss_version]['temporalMetrics']:
             exploitability = vulnerability[cvss_version]['temporalMetrics']['exploitability']
@@ -410,11 +410,11 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
         if "reportConfidence" in vulnerability[cvss_version]['temporalMetrics']:
             reportConfidence = vulnerability[cvss_version]['temporalMetrics']['reportConfidence']
         if "score" in vulnerability[cvss_version]['temporalMetrics']:
-            temporalMetrics = f'{cvss_severity_rating_for_markdown(vulnerability[cvss_version]["temporalMetrics"]['score'])} ({vulnerability[cvss_version]["temporalMetrics"]['score']})'
+            temporalMetrics = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score']))} ({vulnerability[cvss_version]["temporalMetrics"]['score']})'
     if "impactSubscore" in vulnerability[cvss_version]:
-        impactSubscore = f'{cvss_severity_rating_for_markdown(vulnerability[cvss_version]["impactSubscore"])} ({vulnerability[cvss_version]["impactSubscore"]})'
+        impactSubscore = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"]))} ({vulnerability[cvss_version]["impactSubscore"]})'
     if "exploitabilitySubscore" in vulnerability[cvss_version]:
-        exploitabilitySubscore = f'{cvss_severity_rating_for_markdown(vulnerability[cvss_version]["exploitabilitySubscore"])} ({vulnerability[cvss_version]["exploitabilitySubscore"]})'
+        exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"]))} ({vulnerability[cvss_version]["exploitabilitySubscore"]})'
     
     bdsa_link = ""
     messageText = ""
@@ -509,13 +509,15 @@ def addTags(vulnerability):
             cvss_version = "cvss3"
         else:
             cvss_version = "cvss2"
+        if "exploitPublishDate" in vulnerability and vulnerability["exploitPublishDate"]:
+            tags.append("exploit available")
         if "impactSubscore" in vulnerability[cvss_version]:
-            tags.append(f'Impact {cvss_severity_rating_for_tags(vulnerability[cvss_version]["impactSubscore"])}')
+            tags.append(f'Impact {cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"])}')
         if "exploitabilitySubscore" in vulnerability[cvss_version]:
-            tags.append(f'Exploitability {cvss_severity_rating_for_tags(vulnerability[cvss_version]["exploitabilitySubscore"])}')
+            tags.append(f'Exploitability {cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "score" in vulnerability[cvss_version]['temporalMetrics']:
-                tags.append(f'Temporal {cvss_severity_rating_for_tags(vulnerability[cvss_version]["temporalMetrics"]['score'])}')
+                tags.append(f'Temporal {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score'])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "remediationLevel" in vulnerability[cvss_version]['temporalMetrics']:
                 tags.append(f"{vulnerability[cvss_version]['temporalMetrics']['remediationLevel']}")
@@ -541,7 +543,7 @@ def checkOrigin(component):
             return component["origins"][0]["externalId"].replace(' ', '_')
     return component["componentName"].replace(' ', '_')
 
-def cvss_severity_rating_for_tags(score):
+def cvss_severity_rating(score):
     '''
     CVSS 3.1 Qualitative severity rating scale
     '''
@@ -552,16 +554,16 @@ def cvss_severity_rating_for_tags(score):
         elif score >= 9.0: return "CRITICAL"
     return "NONE"
             
-def cvss_severity_rating_for_markdown(score):
+def add_square(score:str):
     '''
     CVSS 3.1 Qualitative severity rating scale adding square before rating.
     '''
     if score:
-        if score >= 0.1 and score <= 3.9: return ":blue_square: LOW"
-        elif score >= 4.0 and score <= 6.9: return ":yellow_square: MEDIUM"
-        elif score >= 7.0 and score <= 8.9: return ":orange_square: HIGH"
-        elif score >= 9.0: return ":red_square: CRITICAL"
-    return "NONE"
+        if score.upper()  == "LOW": return ":blue_square: LOW"
+        elif score.upper()  == "MEDIUM": return ":yellow_square: MEDIUM"
+        elif score.upper()  == "HIGH": return ":orange_square: HIGH"
+        elif score.upper()  == "CRITICAL": return ":red_square: CRITICAL"
+    return score
 
 
 # Changing the native severity into sarif defaultConfiguration level format
