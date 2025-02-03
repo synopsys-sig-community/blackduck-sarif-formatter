@@ -396,6 +396,25 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     privilegesRequired = f'{vulnerability[cvss_version]["privilegesRequired"] if "privilegesRequired" in vulnerability[cvss_version] else ""}'
     scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability[cvss_version] else ""}'
     userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability[cvss_version] else ""}'
+    exploitability = "-"
+    remediationLevel = "-"
+    reportConfidence = "-"
+    impactSubscore = "-"
+    exploitabilitySubscore = "-"
+    temporalMetrics = "-"
+    if "temporalMetrics" in vulnerability[cvss_version]:
+        if "exploitability" in vulnerability[cvss_version]['temporalMetrics']:
+            exploitability = vulnerability[cvss_version]['temporalMetrics']['exploitability']
+        if "remediationLevel" in vulnerability[cvss_version]['temporalMetrics']:
+            remediationLevel = vulnerability[cvss_version]['temporalMetrics']['remediationLevel']
+        if "reportConfidence" in vulnerability[cvss_version]['temporalMetrics']:
+            reportConfidence = vulnerability[cvss_version]['temporalMetrics']['reportConfidence']
+        if "score" in vulnerability[cvss_version]['temporalMetrics']:
+            temporalMetrics = f'{cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score'])} ({vulnerability[cvss_version]["temporalMetrics"]['score']})'
+    if "impactSubscore" in vulnerability[cvss_version]:
+        impactSubscore = f'{cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"])} ({vulnerability[cvss_version]["impactSubscore"]})'
+    if "exploitabilitySubscore" in vulnerability[cvss_version]:
+        exploitabilitySubscore = f'{cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"])} ({vulnerability[cvss_version]["exploitabilitySubscore"]})'
     
     bdsa_link = ""
     messageText = ""
@@ -434,10 +453,10 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
                         intents += "    "
 
     if "technicalDescription" in vulnerability and vulnerability['technicalDescription']:
-        messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+        messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |\n\n{vector}'
     else:
         #CVEs don't have technical description
-        messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n\n{vector}'
+        messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |\n\n{vector}'
     messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}\nDisclosure {getDate(vulnerability,"disclosureDate")}\nExploit Available {getDate(vulnerability,"exploitPublishDate")}'
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
     messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
@@ -490,9 +509,16 @@ def addTags(vulnerability):
             cvss_version = "cvss3"
         else:
             cvss_version = "cvss2"
+        if "impactSubscore" in vulnerability[cvss_version]:
+            tags.append(f'Impact: {cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"])}')
+        if "exploitabilitySubscore" in vulnerability[cvss_version]:
+            tags.append(f'Exploitability: {cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
-            if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == 'OFFICIAL_FIX':
-                tags.append("official_fix")
+            if "score" in vulnerability[cvss_version]['temporalMetrics']:
+                tags.append(f'Temporal: {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score'])}')
+        if "temporalMetrics" in vulnerability[cvss_version]:
+            if "remediationLevel" in vulnerability[cvss_version]['temporalMetrics']:
+                tags.append(f"{vulnerability[cvss_version]['temporalMetrics']['remediationLevel']}")
     tags.append("SCA")
     tags.append("security")
     return tags
@@ -514,6 +540,18 @@ def checkOrigin(component):
         if len(component["origins"]) > 0 and "externalId" in component["origins"][0]:
             return component["origins"][0]["externalId"].replace(' ', '_')
     return component["componentName"].replace(' ', '_')
+
+def cvss_severity_rating(score):
+    '''
+    CVSS 3.1 Qualitative severity rating scale
+    '''
+    if score:
+        if score >= 0.1 and score <= 3.9: return "LOW"
+        elif score >= 4.0 and score <= 6.9: return "MEDIUM"
+        elif score >= 7.0 and score <= 8.9: return "HIGH"
+        elif score >= 9.0: return "CRITICAL"
+    return "NONE"
+            
 
 # Changing the native severity into sarif defaultConfiguration level format
 def nativeSeverityToLevel(argument): 
