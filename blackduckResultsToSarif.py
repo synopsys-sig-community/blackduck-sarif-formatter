@@ -457,7 +457,7 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     else:
         #CVEs don't have technical description
         messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |\n\n{vector}'
-    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}\nDisclosure {getDate(vulnerability,"disclosureDate")}\nExploit Available {getDate(vulnerability,"exploitPublishDate")}'
+    messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}\nDisclosure {getDate(vulnerability,"disclosureDate")}\n :pirate_flag: Exploit Available {getDate(vulnerability,"exploitPublishDate")}'
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
     messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
     messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
@@ -557,7 +557,7 @@ def checkOrigin(component):
 
 def cvss_severity_rating(score):
     '''
-    CVSS 3.1 Qualitative severity rating scale
+    CVSS 3.1 Qualitative severity rating scale (https://www.first.org/cvss/v3.1/specification-document)
     '''
     if score:
         if score >= 0.1 and score <= 3.9: return "LOW"
