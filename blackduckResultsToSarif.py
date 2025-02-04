@@ -526,7 +526,7 @@ def addTags(vulnerability):
                     tags.append("patch available")
                 elif vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == "TEMPORARY_FIX":
                     tags.append("temporary patch available")
-        if vulnerability["workaround"]:
+        if "workaround" in vulnerability and vulnerability["workaround"]:
             tags.append("workaround available")
     tags.append("SCA")
     tags.append("security")
