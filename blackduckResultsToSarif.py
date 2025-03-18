@@ -14,13 +14,13 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.5"
+__versionro__="0.2.6"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
 
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",r".\.csproj",r".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
 
 def find_file_dependency_file(dependency):
@@ -256,7 +256,7 @@ def checkLocations(hub,projectId,projectVersionId,component):
                 componentTofind = re.split(r'[:/]',testingDependencies)[-2]
             else:
                 componentTofind = re.split(r'[:/]',testingDependencies)[0]
-            fileWithPath, lineNumber = find_file_dependency_file(componentTofind.replace("-","\-"))
+            fileWithPath, lineNumber = find_file_dependency_file(componentTofind.replace("-",r"\-"))
             lineNro = 1
             if lineNumber: 
                 lineNro = int(lineNumber)
@@ -419,9 +419,9 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     bdsa_link = ""
     messageText = ""
     if vulnerability["source"] == "BDSA":
-        bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) \| '
+        bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) | '
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
-        bdsa_link = f'[View BDSA record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")}) \| '
+        bdsa_link = f'[View BDSA record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")}) | '
     cve_link = ""
     if vulnerability["source"] == "NVD":
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
