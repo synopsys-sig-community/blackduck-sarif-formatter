@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.6"
+__versionro__="0.2.7"
 
 #Global variables
 args = "" 
@@ -459,7 +459,15 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
         messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |\n\n{vector}'
     messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}\nDisclosure {getDate(vulnerability,"disclosureDate")}\n :pirate_flag: Exploit Available {getDate(vulnerability,"exploitPublishDate")}'
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
-    messageText += f'\nVulnerability Age {timeAfter.days} Days.' 
+    messageText += f'\nVulnerability Age {timeAfter.days} Days.'
+    # If CISA KEV info exists, then it will be added here
+    if "cisa" in vulnerability:
+        messageText += f'\n\n :red_triangle: **CISA KEV**\n'
+        messageText += f'All federal civilian executive branch agencies are required to remediate vulnerabilities in the KEV catalog within prescribed timeframes.\n'
+        messageText += f'**{vulnerability["cisa"]["vulnerabilityName"]}**\n'
+        messageText += f'**Added:** {getDate(vulnerability["cisa"],"addedDate")}\t**Due Date:** {getDate(vulnerability["cisa"],"addedDate")}'
+        messageText += f'**Action:**\n'
+        messageText += f'{vulnerability["cisa"]["requiredAction"]}'
     messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
 
