@@ -462,7 +462,7 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     messageText += f'\nVulnerability Age {timeAfter.days} Days.'
     # If CISA KEV info exists, then it will be added here
     if "cisa" in vulnerability:
-        messageText += f'\n\n :small_red_triangle: **CISA KEV**\n'
+        messageText += f'\n\n :warning: **CISA KEV**\n'
         messageText += f'All federal civilian executive branch agencies are required to remediate vulnerabilities in the KEV catalog within prescribed timeframes.\n'
         messageText += f'**{vulnerability["cisa"]["vulnerabilityName"]}**\n'
         messageText += f'**Added:** {getDate(vulnerability["cisa"],"addedDate")}\t**Due Date:** {getDate(vulnerability["cisa"],"addedDate")}\n'
