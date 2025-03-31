@@ -422,16 +422,18 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) | '
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
         bdsa_link = f'[View BDSA record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")}) | '
+        related_vuln = f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
     cve_link = ""
     if vulnerability["source"] == "NVD":
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
     elif getLinksparam(vulnerability, "related-vulnerability", "label") == "NVD":
         cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerability", "href")})'
+        related_vuln = f' ({getLinksparam(vulnerability, "related-vulnerability", "href").split("/")[-1]})'
 
     messageText += f'**{vulnerability["source"]}** {vulnerability["_meta"]["href"].split("/")[-1]}'
-    related_vuln = getLinksparam(vulnerability, "related-vulnerabilities", "label")
+
     if related_vuln:
-        messageText += f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
+        messageText += related_vuln
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
     #Adding dependency tree or location
@@ -461,13 +463,21 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
     messageText += f'\nVulnerability Age {timeAfter.days} Days.'
     # If CISA KEV info exists, then it will be added here
-    if "cisa" in vulnerability:
+    cve_cisa_kev = None
+    if vulnerability["source"] == "BDSA" and getLinksparam(vulnerability, "related-vulnerability", "label") == "NVD":
+        #We need to get related CVE to get CISA KEV info
+        related_cve = getLinksData(vulnerability, "related-vulnerabilities")
+        if related_cve and "cisa" in related_cve:
+            cve_cisa_kev = related_cve["cisa"]
+    elif "cisa" in vulnerability:
+        cve_cisa_kev = vulnerability["cisa"]
+    if cve_cisa_kev:
         messageText += f'\n\n :warning: **CISA KEV**\n'
         messageText += f'All federal civilian executive branch agencies are required to remediate vulnerabilities in the KEV catalog within prescribed timeframes.\n'
-        messageText += f'**{vulnerability["cisa"]["vulnerabilityName"]}**\n'
-        messageText += f'**Added:** {getDate(vulnerability["cisa"],"addedDate")}\t**Due Date:** {getDate(vulnerability["cisa"],"addedDate")}\n'
+        messageText += f'**{cve_cisa_kev["vulnerabilityName"]}**\n'
+        messageText += f'**Added:** {getDate(cve_cisa_kev,"addedDate")}\t**Due Date:** {getDate(cve_cisa_kev,"dueDate")}\n'
         messageText += f'**Action:**\n'
-        messageText += f'{vulnerability["cisa"]["requiredAction"]}'
+        messageText += f'{cve_cisa_kev["requiredAction"]}'
     messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
 
