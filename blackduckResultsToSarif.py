@@ -418,6 +418,7 @@ def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, de
     
     bdsa_link = ""
     messageText = ""
+    related_vuln = None
     if vulnerability["source"] == "BDSA":
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) | '
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
@@ -466,7 +467,6 @@ def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, de
     cve_cisa_kev = None
     if vulnerability["source"] == "BDSA" and getLinksparam(vulnerability, "related-vulnerability", "label") == "NVD":
         #We need to get related CVE to get CISA KEV info
-        logging.debug(json.dumps(vulnerability, indent=3))
         related_cve = getLinksData(hub, vulnerability, "related-vulnerability")
         if related_cve and "cisa" in related_cve:
             cve_cisa_kev = related_cve["cisa"]
