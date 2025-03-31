@@ -130,7 +130,7 @@ def addFindings():
                         if not ruleId in ruleIds:
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(policies, component, vulnerability, dependency_tree, dependency_tree_matched)},
+                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched)},
                                 "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability)},
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(getSeverity(vulnerability).lower())}}
                             rules.append(rule)
@@ -381,7 +381,7 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}"
     return messageText
 
-def getHelpMarkdown(policies, component, vulnerability, dependency_tree, dependency_tree_matched):
+def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched):
     cvss_version = ""
     if "cvss3" in vulnerability:
         cvss_version = "cvss3"
@@ -466,7 +466,7 @@ def getHelpMarkdown(policies, component, vulnerability, dependency_tree, depende
     cve_cisa_kev = None
     if vulnerability["source"] == "BDSA" and getLinksparam(vulnerability, "related-vulnerability", "label") == "NVD":
         #We need to get related CVE to get CISA KEV info
-        related_cve = getLinksData(vulnerability, "related-vulnerabilities")
+        related_cve = getLinksData(hub, vulnerability, "related-vulnerabilities")
         if related_cve and "cisa" in related_cve:
             cve_cisa_kev = related_cve["cisa"]
     elif "cisa" in vulnerability:
