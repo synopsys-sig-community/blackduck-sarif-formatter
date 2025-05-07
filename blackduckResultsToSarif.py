@@ -388,9 +388,9 @@ def getHelpMarkdownTableForCVSS4(vulnerability):
     baseScore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["baseScore"])) if "baseScore" in vulnerability["cvss4"] else ""}'
     attackVector = f'{vulnerability["cvss4"]["attackVector"] if "attackVector" in vulnerability["cvss4"] else ""}'
     userInteraction = f'{vulnerability["cvss4"]["userInteraction"] if "userInteraction" in vulnerability["cvss4"] else ""}'
-    attackComplexity = f'{add_square(vulnerability["cvss4"]["attackComplexity"]) if "attackComplexity" in vulnerability["cvss4"] else ""}'
+    attackComplexity = f'{add_reverse_square(vulnerability["cvss4"]["attackComplexity"]) if "attackComplexity" in vulnerability["cvss4"] else ""}'
     attackRequirements = f'{vulnerability["cvss4"]["attackRequirements"] if "attackRequirements" in vulnerability["cvss4"] else ""}'
-    privilegesRequired = f'{add_square(vulnerability["cvss4"]["privilegesRequired"]) if "privilegesRequired" in vulnerability["cvss4"] else ""}'
+    privilegesRequired = f'{add_reverse_square(vulnerability["cvss4"]["privilegesRequired"]) if "privilegesRequired" in vulnerability["cvss4"] else ""}'
     subsequentSystemIntegrity = f'{add_square(vulnerability["cvss4"]["subsequentSystemIntegrity"]) if "subsequentSystemIntegrity" in vulnerability["cvss4"] else ""}'
     vulnerableSystemIntegrity = f'{add_square(vulnerability["cvss4"]["vulnerableSystemIntegrity"]) if "vulnerableSystemIntegrity" in vulnerability["cvss4"] else ""}'
     subsequentSystemAvailability = f'{add_square(vulnerability["cvss4"]["subsequentSystemAvailability"]) if "subsequentSystemAvailability" in vulnerability["cvss4"] else ""}'
@@ -423,11 +423,11 @@ def getHelpMarkdownTableForCVSS2_3(vulnerability):
         cvss_version = "cvss2"
     vector = f'{vulnerability[cvss_version]["vector"] if "vector" in vulnerability[cvss_version] else ""}'
     attackVector = f'{vulnerability[cvss_version]["attackVector"] if "attackVector" in vulnerability[cvss_version] else ""}'
-    attackComplexity = f'{add_square(vulnerability[cvss_version]["attackComplexity"]) if "attackComplexity" in vulnerability[cvss_version] else ""}'
+    attackComplexity = f'{add_reverse_square(vulnerability[cvss_version]["attackComplexity"]) if "attackComplexity" in vulnerability[cvss_version] else ""}'
     confidentialityImpact = f'{add_square(vulnerability[cvss_version]["confidentialityImpact"]) if "confidentialityImpact" in vulnerability[cvss_version] else ""}'
     integrityImpact = f'{add_square(vulnerability[cvss_version]["integrityImpact"]) if "integrityImpact" in vulnerability[cvss_version] else ""}'
     availabilityImpact = f'{add_square(vulnerability[cvss_version]["availabilityImpact"]) if "availabilityImpact" in vulnerability[cvss_version] else ""}'
-    privilegesRequired = f'{vulnerability[cvss_version]["privilegesRequired"] if "privilegesRequired" in vulnerability[cvss_version] else ""}'
+    privilegesRequired = f'{add_reverse_square(vulnerability[cvss_version]["privilegesRequired"]) if "privilegesRequired" in vulnerability[cvss_version] else ""}'
     scope = f'{vulnerability[cvss_version]["scope"] if "scope" in vulnerability[cvss_version] else ""}'
     userInteraction = f'{vulnerability[cvss_version]["userInteraction"] if "userInteraction" in vulnerability[cvss_version] else ""}'
     exploitability = "****"
@@ -661,6 +661,17 @@ def add_square(score:str):
         elif score.upper()  == "CRITICAL": return ":red_square: CRITICAL"
     return score
 
+def add_reverse_square(score:str):
+    '''
+    CVSS 3.1 Qualitative severity rating scale adding square before rating.
+    '''
+    if score:
+        if score.upper()  == "NONE": return ":red_square: NONE"
+        elif score.upper()  == "LOW": return ":red_square: LOW"
+        elif score.upper()  == "MEDIUM": return ":orange_square: MEDIUM"
+        elif score.upper()  == "HIGH": return ":blue_square: HIGH"
+        elif score.upper()  == "CRITICAL": return ":blue_square: CRITICAL"
+    return score
 
 # Changing the native severity into sarif defaultConfiguration level format
 def nativeSeverityToLevel(argument): 
