@@ -401,7 +401,7 @@ def getHelpMarkdownTableForCVSS4(vulnerability):
     nomenclature = f'{vulnerability["cvss4"]["nomenclature"] if "nomenclature" in vulnerability["cvss4"] else ""}'
     impactSubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["impactSubscore"])) if "impactSubscore" in vulnerability["cvss4"] else ""}'
     exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["exploitabilitySubscore"])) if "exploitabilitySubscore" in vulnerability["cvss4"] else ""}'
-    tableText = f'## {getNomenclature(nomenclature)} [(CVSS v4.x Metrics)](https://www.first.org/cvss/v4-0/specification-document)\n'
+    tableText = f'## {getNomenclature(nomenclature)} ([CVSS v4.x Metrics](https://www.first.org/cvss/v4-0/specification-document))\n'
     tableText += f'|   |   |   |   |\n'
     tableText += f'| :-- | :-- | :-- | :-- |\n'
     tableText += f'| Attack Vector (AV) | **{attackVector}** | Attack Complexity (AC) | **{attackComplexity}** |\n'
@@ -449,7 +449,7 @@ def getHelpMarkdownTableForCVSS2_3(vulnerability):
         impactSubscore = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"]))} ({vulnerability[cvss_version]["impactSubscore"]})'
     if "exploitabilitySubscore" in vulnerability[cvss_version]:
         exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"]))} ({vulnerability[cvss_version]["exploitabilitySubscore"]})'
-    tableText = f'## Base Score Metrics {"[(CVSS v3.x Metrics)](https://www.first.org/cvss/v3.1/specification-document)" if cvss_version == "cvss3" else "[(CVSS v2.x Metrics)](https://www.first.org/cvss/v2/guide)"})\n'
+    tableText = f'## Base Score Metrics ({"[CVSS v3.x Metrics](https://www.first.org/cvss/v3.1/specification-document)" if cvss_version == "cvss3" else "[CVSS v2.x Metrics](https://www.first.org/cvss/v2/guide)"})\n'
     tableText += f'|   |   |   |   |\n'
     tableText += f'| :-- | :-- | :-- | :-- |\n'
     tableText += f'| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n'
@@ -465,13 +465,14 @@ def getHelpMarkdownTableForCVSS2_3(vulnerability):
 def getNomenclature(nomenclature):
     if nomenclature:
         if nomenclature == "CVSS-B":
-            return f'Base metrics (CVSS-B)'
+            return 'Base metrics (CVSS-B)'
         elif nomenclature == "CVSS-BE":
-            return f'Base and Environmental metrics (CVSS-BE)'
-        elif nomenclature == "CVSS-BT":
-            return f'Base and Threat metrics (CVSS-BT)'
+            return 'Base and Environmental metrics (CVSS-BE)'
+        elif nomenclature == "CVSS_BT":
+            return 'Base and Threat metrics (CVSS-BT)'
         elif nomenclature == "CVSS-BTE":
-            return f'Base, Threat, Environmental metrics (CVSS-BTE)'
+            return 'Base, Threat, Environmental metrics (CVSS-BTE)'
+    return nomenclature
 
 def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched):
     bdsa_link = ""
