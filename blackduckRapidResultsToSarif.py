@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # This script will collect all vulnerabilites and licenses which have a policy violation.
-import glob
 import json
 import logging
 import argparse
@@ -14,12 +13,12 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.4"
+__versionro__="0.2.5"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",r".\.csproj",r".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
 
 def find_file_dependency_file(dependency):
@@ -134,7 +133,7 @@ def addFindings():
                         component_to_find = dependencies[0]
                         if len(dependencies) > 1:
                             component_to_find = dependencies[1]
-                        fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
+                        fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-',r'\-'))
                         if lineNumber: 
                             locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath}'},"region":{"startLine":int(lineNumber)}}})
                         else:

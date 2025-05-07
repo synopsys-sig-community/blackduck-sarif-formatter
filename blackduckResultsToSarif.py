@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.7"
+__versionro__="0.2.8"
 
 #Global variables
 args = "" 
@@ -274,6 +274,8 @@ def checkLocations(hub,projectId,projectVersionId,component):
 def getSeverity(vulnerability):
     if "severity" in vulnerability:
         return vulnerability["severity"]
+    elif "cvss4" in vulnerability:
+        return vulnerability["cvss4"]["severity"]
     elif "cvss3" in vulnerability:
         return vulnerability["cvss3"]["severity"]
     elif "cvss2" in vulnerability:
@@ -381,7 +383,39 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}"
     return messageText
 
-def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched):
+def getHelpMarkdownTableForCVSS4(vulnerability):
+    vector = f'{vulnerability["cvss4"]["vector"] if "vector" in vulnerability["cvss4"] else ""}'
+    baseScore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["baseScore"])) if "baseScore" in vulnerability["cvss4"] else ""}'
+    attackVector = f'{vulnerability["cvss4"]["attackVector"] if "attackVector" in vulnerability["cvss4"] else ""}'
+    userInteraction = f'{vulnerability["cvss4"]["userInteraction"] if "userInteraction" in vulnerability["cvss4"] else ""}'
+    attackComplexity = f'{add_square(vulnerability["cvss4"]["attackComplexity"]) if "attackComplexity" in vulnerability["cvss4"] else ""}'
+    attackRequirements = f'{vulnerability["cvss4"]["attackRequirements"] if "attackRequirements" in vulnerability["cvss4"] else ""}'
+    privilegesRequired = f'{add_square(vulnerability["cvss4"]["privilegesRequired"]) if "privilegesRequired" in vulnerability["cvss4"] else ""}'
+    subsequentSystemIntegrity = f'{add_square(vulnerability["cvss4"]["subsequentSystemIntegrity"]) if "subsequentSystemIntegrity" in vulnerability["cvss4"] else ""}'
+    vulnerableSystemIntegrity = f'{add_square(vulnerability["cvss4"]["vulnerableSystemIntegrity"]) if "vulnerableSystemIntegrity" in vulnerability["cvss4"] else ""}'
+    subsequentSystemAvailability = f'{add_square(vulnerability["cvss4"]["subsequentSystemAvailability"]) if "subsequentSystemAvailability" in vulnerability["cvss4"] else ""}'
+    vulnerableSystemAvailability = f'{add_square(vulnerability["cvss4"]["vulnerableSystemAvailability"]) if "vulnerableSystemAvailability" in vulnerability["cvss4"] else ""}'
+    subsequentSystemConfidentiality = f'{add_square(vulnerability["cvss4"]["subsequentSystemConfidentiality"]) if "subsequentSystemConfidentiality" in vulnerability["cvss4"] else ""}'
+    vulnerableSystemConfidentiality = f'{add_square(vulnerability["cvss4"]["vulnerableSystemConfidentiality"]) if "vulnerableSystemConfidentiality" in vulnerability["cvss4"] else ""}'
+    exploitMaturity = f'{vulnerability["cvss4"]["exploitMaturity"] if "exploitMaturity" in vulnerability["cvss4"] else ""}'
+    nomenclature = f'{vulnerability["cvss4"]["nomenclature"] if "nomenclature" in vulnerability["cvss4"] else ""}'
+    impactSubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["impactSubscore"])) if "impactSubscore" in vulnerability["cvss4"] else ""}'
+    exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["exploitabilitySubscore"])) if "exploitabilitySubscore" in vulnerability["cvss4"] else ""}'
+    tableText = f'## {getNomenclature(nomenclature)} [(CVSS v4.x Metrics)](https://www.first.org/cvss/v4-0/specification-document)\n'
+    tableText += f'|   |   |   |   |\n'
+    tableText += f'| :-- | :-- | :-- | :-- |\n'
+    tableText += f'| Attack Vector (AV) | **{attackVector}** | Attack Complexity (AC) | **{attackComplexity}** |\n'
+    tableText += f'| Attack Requirements (AT) | **{attackRequirements}** | Privileges Required (PR) | **{privilegesRequired}** |\n'
+    tableText += f'| User Interaction (UI) | **{userInteraction}** | Vulnerable System Confidentiality Impact (VC) | **{vulnerableSystemConfidentiality}** |\n'
+    tableText += f'| Vulnerable System Integrity Impact (VI) | **{vulnerableSystemIntegrity}** | Vulnerable System Availability Impact (VA) | **{vulnerableSystemAvailability}** |\n'
+    tableText += f'| Subsequent System Confidentiality Impact (SC) | **{subsequentSystemConfidentiality}** | Subsequent System Integrity Impact (SI) | **{subsequentSystemIntegrity}** |\n'
+    tableText += f'| Subsequent System Availability Impact (SA) | **{subsequentSystemAvailability}** | Exploit Maturity (E) | **{exploitMaturity}** |\n'
+    tableText += f'| Exploitability | **{exploitabilitySubscore}** | CVSS Nomenclature | **{nomenclature}** |\n'
+    tableText += f'| Base Score | **{baseScore}** | Impact | **{impactSubscore}** |'
+    tableText += f'\n\n**CVSS vector:** {vector}'
+    return tableText
+
+def getHelpMarkdownTableForCVSS2_3(vulnerability):
     cvss_version = ""
     if "cvss3" in vulnerability:
         cvss_version = "cvss3"
@@ -415,7 +449,31 @@ def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, de
         impactSubscore = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"]))} ({vulnerability[cvss_version]["impactSubscore"]})'
     if "exploitabilitySubscore" in vulnerability[cvss_version]:
         exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"]))} ({vulnerability[cvss_version]["exploitabilitySubscore"]})'
-    
+    tableText = f'## Base Score Metrics {"[(CVSS v3.x Metrics)](https://www.first.org/cvss/v3.1/specification-document)" if cvss_version == "cvss3" else "[(CVSS v2.x Metrics)](https://www.first.org/cvss/v2/guide)"})\n'
+    tableText += f'|   |   |   |   |\n'
+    tableText += f'| :-- | :-- | :-- | :-- |\n'
+    tableText += f'| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n'
+    tableText += f'| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n'
+    tableText += f'| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n'
+    tableText += f'| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n'
+    tableText += f'| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n'
+    tableText += f'| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n'
+    tableText += f'| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |'
+    tableText += f'\n\n**CVSS vector:** {vector}'
+    return tableText
+
+def getNomenclature(nomenclature):
+    if nomenclature:
+        if nomenclature == "CVSS-B":
+            return f'Base metrics (CVSS-B)'
+        elif nomenclature == "CVSS-BE":
+            return f'Base and Environmental metrics (CVSS-BE)'
+        elif nomenclature == "CVSS-BT":
+            return f'Base and Threat metrics (CVSS-BT)'
+        elif nomenclature == "CVSS-BTE":
+            return f'Base, Threat, Environmental metrics (CVSS-BTE)'
+
+def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched):
     bdsa_link = ""
     messageText = ""
     related_vuln = None
@@ -456,10 +514,15 @@ def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, de
                         intents += "    "
 
     if "technicalDescription" in vulnerability and vulnerability['technicalDescription']:
-        messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |\n\n{vector}'
+        messageText += f'\n\n## Technical Description\n{vulnerability["technicalDescription"] if vulnerability["technicalDescription"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n'
     else:
         #CVEs don't have technical description
-        messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n## Base Score Metrics (CVSS v3.x Metrics)\n|   |   |   |   |\n| :-- | :-- | :-- | :-- |\n| Attack vector | **{attackVector}** | Availability | **{availabilityImpact}** |\n| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |\n\n{vector}'
+        messageText += f'\n\n## Description\n{vulnerability["description"] if vulnerability["description"] else "-"}\n{bdsa_link if bdsa_link else ""}{cve_link if cve_link else ""}\n\n'
+    if "cvss4" in vulnerability:
+        messageText += getHelpMarkdownTableForCVSS4(vulnerability)
+    elif "cvss3" in vulnerability or "cvss2" in vulnerability:
+        messageText += getHelpMarkdownTableForCVSS2_3(vulnerability)
+
     messageText += f'\n\nPublished on {getDate(vulnerability, "publishedDate")}\nLast Modified {getDate(vulnerability,"updatedDate")}\nDisclosure {getDate(vulnerability,"disclosureDate")}\n :pirate_flag: Exploit Available {getDate(vulnerability,"exploitPublishDate")}'
     timeAfter = datetime.now()-datetime.strptime(vulnerability["publishedDate"], "%Y-%m-%dT%H:%M:%S.%fZ")
     messageText += f'\nVulnerability Age {timeAfter.days} Days.'
@@ -577,6 +640,7 @@ def checkOrigin(component):
 def cvss_severity_rating(score):
     '''
     CVSS 3.1 Qualitative severity rating scale (https://www.first.org/cvss/v3.1/specification-document)
+    CVSS 4.0 has same rating scale: https://www.first.org/cvss/v4-0/specification-document
     '''
     if score:
         if score >= 0.1 and score <= 3.9: return "LOW"
