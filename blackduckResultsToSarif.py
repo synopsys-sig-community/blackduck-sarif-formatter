@@ -472,7 +472,7 @@ def getNomenclature(nomenclature):
             return 'Base and Threat metrics (CVSS-BT)'
         elif nomenclature == "CVSS-BTE":
             return 'Base, Threat, Environmental metrics (CVSS-BTE)'
-    return nomenclature
+    return "Base Score Metrics"
 
 def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched):
     bdsa_link = ""
