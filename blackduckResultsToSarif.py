@@ -385,7 +385,7 @@ def getHelpMarkdownLicense(component, policy_violation, dependency_tree, depende
 
 def getHelpMarkdownTableForCVSS4(vulnerability):
     vector = f'{vulnerability["cvss4"]["vector"] if "vector" in vulnerability["cvss4"] else ""}'
-    baseScore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["baseScore"])) if "baseScore" in vulnerability["cvss4"] else ""}'
+    baseScore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["baseScore"])) + " (" + vulnerability["cvss4"]["baseScore"] + ")" if "baseScore" in vulnerability["cvss4"] else ""}'
     attackVector = f'{vulnerability["cvss4"]["attackVector"] if "attackVector" in vulnerability["cvss4"] else ""}'
     userInteraction = f'{vulnerability["cvss4"]["userInteraction"] if "userInteraction" in vulnerability["cvss4"] else ""}'
     attackComplexity = f'{add_reverse_square(vulnerability["cvss4"]["attackComplexity"]) if "attackComplexity" in vulnerability["cvss4"] else ""}'
@@ -399,8 +399,8 @@ def getHelpMarkdownTableForCVSS4(vulnerability):
     vulnerableSystemConfidentiality = f'{add_square(vulnerability["cvss4"]["vulnerableSystemConfidentiality"]) if "vulnerableSystemConfidentiality" in vulnerability["cvss4"] else ""}'
     exploitMaturity = f'{vulnerability["cvss4"]["exploitMaturity"] if "exploitMaturity" in vulnerability["cvss4"] else ""}'
     nomenclature = f'{vulnerability["cvss4"]["nomenclature"] if "nomenclature" in vulnerability["cvss4"] else ""}'
-    impactSubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["impactSubscore"])) if "impactSubscore" in vulnerability["cvss4"] else ""}'
-    exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["exploitabilitySubscore"])) if "exploitabilitySubscore" in vulnerability["cvss4"] else ""}'
+    impactSubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["impactSubscore"])) + " (" + vulnerability["cvss4"]["impactSubscore"] + ")" if "impactSubscore" in vulnerability["cvss4"] else ""}'
+    exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["exploitabilitySubscore"])) + " (" + vulnerability["cvss4"]["exploitabilitySubscore"] +")" if "exploitabilitySubscore" in vulnerability["cvss4"] else ""}'
     tableText = f'## {getNomenclature(nomenclature)} ([CVSS v4.x Metrics](https://www.first.org/cvss/v4-0/specification-document))\n'
     tableText += f'|   |   |   |   |\n'
     tableText += f'| :-- | :-- | :-- | :-- |\n'
