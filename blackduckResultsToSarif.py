@@ -136,7 +136,8 @@ def addFindings():
                             rules.append(rule)
                             ruleIds.append(ruleId)
                         ## Adding results for vulnerabilities
-                        result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}'}
+                        seeInBD=f'{hub.get_apibase()}/projects/{projectId}/versions/{projectVersionId}/vulnerability-bom?selectedComponent={component["component"].split("/")[-1]}&componentList.q={component["componentName"]}'
+                        result['message'] = {"text":f'{vulnerability["description"][:1000] if vulnerability["description"] else "-"}\n[See in Black Duck]({seeInBD})'}
                         result['ruleId'] = ruleId
                         if locations and len(locations) > 0:
                             result['locations'] = locations
