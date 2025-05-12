@@ -504,7 +504,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
 
     #Adding link to BD to see the issues
-    seeInBD=f'{hub.get_apibase()}/projects/{projectId}/versions/{projectVersionId}/vulnerability-bom?selectedComponent={component["component"].split("/")[-1]}&componentList.q={component["componentName"]}'
+    seeInBD=f'{hub.get_apibase()}/projects/{projectId}/versions/{projectVersionId}/vulnerability-bom?selectedComponent={component["component"].split("/")[-1]}&componentList.q={component["componentName"].replace(" ", "+")}'
     messageText += f"\n\n[Click Here To See More Details in Black Duck SCA]({seeInBD})"
 
     #Adding dependency tree or location
