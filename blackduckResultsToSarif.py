@@ -130,7 +130,7 @@ def addFindings():
                         if not ruleId in ruleIds:
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched)},
+                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)},
                                 "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability)},
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(getSeverity(vulnerability).lower())}}
                             rules.append(rule)
@@ -480,7 +480,7 @@ def getNomenclature(nomenclature):
             return 'Base, Threat, Environmental metrics (CVSS-BTE)'
     return "Base Score Metrics"
 
-def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, dependency_tree_matched):
+def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched):
     bdsa_link = ""
     messageText = ""
     related_vuln = None
@@ -502,6 +502,11 @@ def getHelpMarkdown(hub, policies, component, vulnerability, dependency_tree, de
         messageText += related_vuln
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
+
+    #Adding link to BD to see the issues
+    seeInBD=f'{hub.get_apibase()}/projects/{projectId}/versions/{projectVersionId}/vulnerability-bom?selectedComponent={component["component"].split("/")[-1]}&componentList.q={component["componentName"]}'
+    messageText += f"\n\n[Click Here To See More Details in Black Duck SCA]({seeInBD})"
+
     #Adding dependency tree or location
     if dependency_tree and len(dependency_tree) > 0:
         messageText += "\n\n## Dependency tree\n"
