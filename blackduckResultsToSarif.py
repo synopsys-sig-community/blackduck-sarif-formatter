@@ -137,7 +137,6 @@ def addFindings():
                             ruleIds.append(ruleId)
                         ## Adding results for vulnerabilities
                         seeInBD=f'{hub.get_apibase()}/projects/{projectId}/versions/{projectVersionId}/vulnerability-bom?selectedComponent={component["component"].split("/")[-1]}&componentList.q={component["componentName"]}'
-                        logging.info(seeInBD)
                         description = f"[See in Black Duck]({seeInBD})\n"
                         if "description" in vulnerability and vulnerability["description"]:
                             description += vulnerability["description"]
