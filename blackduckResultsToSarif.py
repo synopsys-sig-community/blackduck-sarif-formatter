@@ -60,7 +60,6 @@ def get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
     global origins_cache
     transitive_guidances = []
     if component and "origins" in component:
-        logging.info(component["componentName"])
         for origin in component["origins"]:
             originID = getLinksparam(origin, "origin", "href").split("/")[-1]
             dependency_paths = get_Dependency_paths(hub, projectId, projectVersionId, originID)
