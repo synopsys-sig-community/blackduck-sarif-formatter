@@ -60,24 +60,28 @@ def get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
     global origins_cache
     transitive_guidances = []
     if component and "origins" in component:
+        logging.info(component["componentName"])
         for origin in component["origins"]:
             originID = getLinksparam(origin, "origin", "href").split("/")[-1]
             dependency_paths = get_Dependency_paths(hub, projectId, projectVersionId, originID)
             if dependency_paths and dependency_paths['totalCount'] > 0:
                 for dependency in dependency_paths['items']:
-                    logging.info(dependency)
-
-
-
-        # for origin in component["origins"]:
-        #     if not origin["packageUrl"] in origins_cache.keys():
-        #         hub
-        #         transitive_guidance = getLinksData(hub, origin, "transitive-upgrade-guidance")
-        #         if transitive_guidance:
-        #             transitive_guidances.append(transitive_guidance)
-        #             origins_cache[origin["packageUrl"]] = transitive_guidance
-        #     else:
-        #         transitive_guidances.append(origins_cache.get(origin["packageUrl"]))
+                    if dependency["type"] == "TRANSITIVE":
+                        if not dependency["path"][-2]["originId"] in origins_cache.keys():
+                            transitive_guidance = getLinksData(hub, dependency["path"][-2], "transitive-upgrade-guidance")
+                            if transitive_guidance:
+                                transitive_guidances.append(transitive_guidance)
+                                origins_cache[dependency["path"][-2]["originId"]] = transitive_guidance
+                        else:
+                            transitive_guidances.append(origins_cache.get(dependency["path"][-2]["originId"]))
+                    else:
+                        if not dependency["path"][0]["originId"] in origins_cache.keys():
+                            transitive_guidance = getLinksData(hub, dependency["path"][0], "upgrade-guidance")
+                            if transitive_guidance:
+                                transitive_guidances.append(transitive_guidance)
+                                origins_cache[dependency["path"][0]["originId"]] = transitive_guidance
+                        else:
+                            transitive_guidances.append(origins_cache.get(dependency["path"][0]["originId"]))
     return transitive_guidances
 
 def get_vulnerability_overview(hub, vulnerability):
@@ -583,18 +587,17 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
         messageText += f'**Action:**\n'
         messageText += f'{cve_cisa_kev["requiredAction"]}'
     messageText += f'\n\n## Upgrade Recommendation\n'
-    # transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
-    # if transient_upgrade_guidances:
-    #     for guidance in transient_upgrade_guidances:
-    #         logging.info(guidance)
-    #         messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
-    #         if "shortTerm" in guidance:
-    #             messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}'
-    #         if "longTerm" in guidance:
-    #             messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
-    #     messageText += f'\n### Component Version\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
-    # else:
-    messageText += f'{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
+    if transient_upgrade_guidances:
+        for guidance in transient_upgrade_guidances:
+            messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
+            if "shortTerm" in guidance:
+                messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}'
+            if "longTerm" in guidance:
+                messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
+        messageText += f'\n### Component Version\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    else:
+        messageText += f'{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
 
     if policies:
