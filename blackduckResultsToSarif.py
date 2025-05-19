@@ -22,6 +22,7 @@ MAX_LIMIT=1000
 
 supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",r".\.csproj",r".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
+origins_cache = {}
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
@@ -55,6 +56,20 @@ def checkDependencyLineNro(filename, dependency):
                 return num
     return None
 
+def get_Transitive_upgrade_guidance(hub, component) -> list:
+    global origins_cache
+    transitive_guidances = []
+    if component and "origins" in component:
+        for origin in component["origins"]:
+            if not origin["packageUrl"] in origins_cache.keys():
+                transitive_guidance = getLinksData(hub, origin, "transitive-upgrade-guidance")
+                if transitive_guidance:
+                    transitive_guidances.append(transitive_guidance)
+                    origins_cache[origin["packageUrl"]] = transitive_guidance
+            else:
+                transitive_guidances.append(origins_cache.get(origin["packageUrl"]))
+    return transitive_guidances
+
 def get_vulnerability_overview(hub, vulnerability):
     return hub.execute_get(vulnerability['_meta']['href']).json()
 
@@ -82,7 +97,10 @@ def createFilterForComponents():
         policyCategoryOptions += f'policyCategory:{policyCategory.strip().lower()},'
     return policyCategoryOptions[:-1]
 
-def getLinksData(hub, data, relName):
+def getLinksData(hub, data, relName, headers=None):
+    if headers:
+        logging.info(f'{getLinksparam(data,relName,"href")}')
+        return hub.execute_get(f'{getLinksparam(data,relName,"href")}', custom_headers=headers).json()
     return hub.execute_get(f'{getLinksparam(data,relName,"href")}?limit={MAX_LIMIT}').json()
 
 def getLinksparam(data, relName, param):
@@ -554,7 +572,16 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
         messageText += f'**Added:** {getDate(cve_cisa_kev,"addedDate")}\t**Due Date:** {getDate(cve_cisa_kev,"dueDate")}\n'
         messageText += f'**Action:**\n'
         messageText += f'{cve_cisa_kev["requiredAction"]}'
-    messageText += f'\n\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    messageText += f'\n\n## Upgrade Recommendation\n'
+    transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, component)
+    if transient_upgrade_guidances:
+        for guidance in transient_upgrade_guidances:
+            messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
+            messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}'
+            messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
+        messageText += f'\n### Component Version\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    else:
+        messageText += f'{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
 
     if policies:
