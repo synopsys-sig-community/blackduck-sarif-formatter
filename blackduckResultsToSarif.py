@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.9"
+__versionro__="0.2.10"
 
 #Global variables
 args = "" 
@@ -56,18 +56,28 @@ def checkDependencyLineNro(filename, dependency):
                 return num
     return None
 
-def get_Transitive_upgrade_guidance(hub, component) -> list:
+def get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component) -> list:
     global origins_cache
     transitive_guidances = []
     if component and "origins" in component:
         for origin in component["origins"]:
-            if not origin["packageUrl"] in origins_cache.keys():
-                transitive_guidance = getLinksData(hub, origin, "transitive-upgrade-guidance")
-                if transitive_guidance:
-                    transitive_guidances.append(transitive_guidance)
-                    origins_cache[origin["packageUrl"]] = transitive_guidance
-            else:
-                transitive_guidances.append(origins_cache.get(origin["packageUrl"]))
+            originID = getLinksparam(origin, "origin", "href").split("/")[-1]
+            dependency_paths = get_Dependency_paths(hub, projectId, projectVersionId, originID)
+            if dependency_paths and dependency_paths['totalCount'] > 0:
+                for dependency in dependency_paths['items']:
+                    logging.info(dependency)
+
+
+
+        # for origin in component["origins"]:
+        #     if not origin["packageUrl"] in origins_cache.keys():
+        #         hub
+        #         transitive_guidance = getLinksData(hub, origin, "transitive-upgrade-guidance")
+        #         if transitive_guidance:
+        #             transitive_guidances.append(transitive_guidance)
+        #             origins_cache[origin["packageUrl"]] = transitive_guidance
+        #     else:
+        #         transitive_guidances.append(origins_cache.get(origin["packageUrl"]))
     return transitive_guidances
 
 def get_vulnerability_overview(hub, vulnerability):
@@ -85,7 +95,7 @@ def get_version_components(hub, projectversion, limit=MAX_LIMIT):
 def get_Dependency_paths(hub, projectID, projectversionID, originID):
     url = f"{hub.get_urlbase()}/api/project/{projectID}/version/{projectversionID}/origin/{originID}/dependency-paths"
     headers = hub.get_headers()
-    headers['Accept'] = 'application/vnd.blackducksoftware.bill-of-materials-6+json'
+    headers['Accept'] = 'application/vnd.blackducksoftware.bill-of-materials-7+json'
     response = requests.get(url, headers=headers, verify = not hub.config['insecure'])
     jsondata = response.json()
     return jsondata
@@ -573,15 +583,18 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
         messageText += f'**Action:**\n'
         messageText += f'{cve_cisa_kev["requiredAction"]}'
     messageText += f'\n\n## Upgrade Recommendation\n'
-    transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, component)
-    if transient_upgrade_guidances:
-        for guidance in transient_upgrade_guidances:
-            messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
-            messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}'
-            messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
-        messageText += f'\n### Component Version\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
-    else:
-        messageText += f'{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    # transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
+    # if transient_upgrade_guidances:
+    #     for guidance in transient_upgrade_guidances:
+    #         logging.info(guidance)
+    #         messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
+    #         if "shortTerm" in guidance:
+    #             messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}'
+    #         if "longTerm" in guidance:
+    #             messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
+    #     messageText += f'\n### Component Version\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+    # else:
+    messageText += f'{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
 
     if policies:
