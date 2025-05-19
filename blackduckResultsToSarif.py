@@ -591,7 +591,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
         for guidance in transient_upgrade_guidances:
             messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
             if "shortTerm" in guidance:
-                messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}'
+                messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}\t'
             if "longTerm" in guidance:
                 messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
         messageText += f'\n### Component Version\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
