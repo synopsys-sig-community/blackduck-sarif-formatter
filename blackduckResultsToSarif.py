@@ -585,16 +585,20 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
         messageText += f'**Added:** {getDate(cve_cisa_kev,"addedDate")}\t**Due Date:** {getDate(cve_cisa_kev,"dueDate")}\n'
         messageText += f'**Action:**\n'
         messageText += f'{cve_cisa_kev["requiredAction"]}'
-    messageText += f'\n\n## Upgrade Recommendation\n'
+    messageText += f'\n\n## :arrow_up: Upgrade Recommendation\n'
     transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
     if transient_upgrade_guidances:
         for guidance in transient_upgrade_guidances:
             messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
             if "shortTerm" in guidance:
                 messageText += f'**Short-Term:**\t{guidance["componentName"]} {guidance["shortTerm"]["versionName"] if "versionName" in guidance["shortTerm"] else "-"}\t'
+            else:
+                messageText += f'**Short-Term:**\t_Not available at this time_\t'
             if "longTerm" in guidance:
                 messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
-        messageText += f'\n### Component Version\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+            else:
+                messageText += f'**Long-Term:**\t_Not available at this time_\t'
+        messageText += f'\n### Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     else:
         messageText += f'{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
