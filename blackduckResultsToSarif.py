@@ -598,9 +598,9 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
                 messageText += f'**Long-Term:**\t{guidance["componentName"]} {guidance["longTerm"]["versionName"] if "versionName" in guidance["longTerm"] else "-"}\n'
             else:
                 messageText += f'**Long-Term:**\t_Not available at this time_\n'
-        messageText += f'\n### Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+        messageText += f'\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     else:
-        messageText += f'{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
+        messageText += f'\n## Solution\n{vulnerability["solution"] if "solution" in vulnerability and vulnerability["solution"] else "No Solution"}'
     messageText += f'\n\n## Workaround\n{vulnerability["workaround"] if "workaround" in vulnerability and vulnerability["workaround"] else "No Workaround"}'
 
     if policies:
