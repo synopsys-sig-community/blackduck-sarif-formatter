@@ -66,8 +66,8 @@ Get Sarif format report from full Black Duck scan.
     - uses: synopsys-sig-community/blackduck-sarif-formatter@main
       with:
         blackduck_url: ${{ secrets.blackduck_url }}
-        blackduck_project: ${{ inputs.blackduck_project }}
-        blackduck_version: ${{inputs.blackduck_version}}
+        blackduck_project: ${{github.repository}}
+        blackduck_version: ${{github.ref_name}}
         blackduck_apiToken: ${{ secrets.blackduck_token }}
         blackduck_scan_full: true
         blackduck_outputFile: ${{github.workspace}}/blackduck-sarif.json
