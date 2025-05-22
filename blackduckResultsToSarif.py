@@ -167,6 +167,7 @@ def addFindings():
                             rules.append(rule)
                             ruleIds.append(ruleId)
                         ## Adding results for vulnerabilities
+                        fullDescription = ""
                         if "description" in vulnerability and vulnerability["description"]:
                             fullDescription += vulnerability["description"]
                         else:
