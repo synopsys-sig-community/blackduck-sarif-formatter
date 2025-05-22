@@ -481,7 +481,7 @@ def getHelpMarkdownTableForCVSS2_3(vulnerability):
         if "reportConfidence" in vulnerability[cvss_version]['temporalMetrics']:
             reportConfidence = vulnerability[cvss_version]['temporalMetrics']['reportConfidence']
         if "score" in vulnerability[cvss_version]['temporalMetrics']:
-            temporalMetrics = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score']))} ({vulnerability[cvss_version]["temporalMetrics"]['score']})'
+            temporalMetrics = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]["score"]))} ({vulnerability[cvss_version]["temporalMetrics"]["score"]})'
     if "impactSubscore" in vulnerability[cvss_version]:
         impactSubscore = f'{add_square(cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"]))} ({vulnerability[cvss_version]["impactSubscore"]})'
     if "exploitabilitySubscore" in vulnerability[cvss_version]:

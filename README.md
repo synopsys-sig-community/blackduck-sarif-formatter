@@ -2,7 +2,7 @@
 This action is used to create a Sarif -format report from Black Duck.
 
 ## Prerequisities
-This action expects that Black Duck scan is done before running this action. You can use Synopsys official GitHub Action [Synopsys Action](https://github.com/marketplace/actions/synopsys-action) to run full or rapid scan.
+This action expects that Black Duck scan is done before running this action. You can use Black Duck official GitHub Action [Black Duck Security Scan](https://github.com/marketplace/actions/black-duck-security-scan) to run full or rapid scan.
 
 **Rapid scan results**
 
@@ -10,7 +10,7 @@ When running Black Duck scan with RAPID mode and you need to run this action to 
 * --detect.scan.output.path
 * --detect.cleanup=false
 
-If you are using the Synopsys official synopsys-action to run the Black Duck analysis, you can set needed params (listed above) with following environment variable (see example below):
+If you are using the Black Duck official action to run the Black Duck analysis, you can set needed params (listed above) with following environment variable (see example below):
 * DETECT_SCAN_OUTPUT_PATH
 * DETECT_CLEANUP
 
@@ -35,32 +35,41 @@ By setting the detect.cleanup to false, you will prevent Black Duck to remove th
 Get Sarif format report from full Black Duck scan.
 ```yaml
        #------------Black Duck full------------------------#
-    - name: Black Duck Analysis with synopsys-action
-      uses: synopsys-sig/synopsys-action@v1.2.0
+      name: Black Duck Analysis with synopsys-action
+      uses: blackduck-inc/black-duck-security-scan@v2
       with:
-        blackduck_apiToken: ${{ secrets.blackduck_token }}
-        blackduck_url: ${{ secrets.blackduck_url }}
-        blackduck_scan_full: true
-        github_token: ${{secrets.GITHUB_TOKEN}}
-        blackduck_automation_fixpr: false
-        blackduck_scan_failure_severities: "NONE"
+        blackducksca_token: ${{ secrets.blackduck_token }}
+        blackducksca_url: ${{ secrets.blackduck_url }}
+        blackducksca_scan_full: true
+        blackducksca_fixpr_enabled: false
+        blackducksca_fixpr_maxCount: 10
+        blackducksca_fixpr_filter_severities: 'CRITICAL,HIGH,MEDIUM'
+        blackducksca_scan_failure_severities: NONE
+        github_token: ${{secrets.GITHUB_TOKEN}} # Mandatory when blackduck_fixpr_enabled is set to 'true'
       env:
         DETECT_PROJECT_NAME: ${{github.repository}}
         DETECT_PROJECT_VERSION_NAME: ${{github.ref_name}}
         DETECT_CODE_LOCATION_NAME: ${{github.repository}}-${{github.ref_name}}
+        DETECT_CLEANUP: "false" # This needs to be set, because of RAPID scan results
         DETECT_TIMEOUT: "7200"
         DETECT_DETECTOR_SEARCH_DEPTH: "20"
         DETECT_DETECTOR_SEARCH_CONTINUE: "true"
         DETECT_EXCLUDED_DIRECTORIES_SEARCH_DEPTH: "20"
-        DETECT_EXCLUDED_DIRECTORIES: node_modules
-        DETECT_BLACKDUCK_SIGNATURE_EXCLUSION_NAME_PATTERNS: detect.jar
+        DETECT_EXCLUDED_DIRECTORIES: node_modules,detect,.bridge
+        DETECT_PUB_DEPENDENCY_TYPES_EXCLUDE: DEV
         DETECT_NPM_DEPENDENCY_TYPES_EXCLUDED: DEV
         DETECT_TOOLS: "ALL,IAC_SCAN" #All is not activating IaC scan, it needs to be activate separately with IAC_SCAN
+        DETECT_BLACKDUCK_SIGNATURE_SCANNER_COPYRIGHT_SEARCH: "true"
+        DETECT_BLACKDUCK_SIGNATURE_SCANNER_LICENSE_SEARCH: "true"
+        DETECT_BLACKDUCK_SIGNATURE_SCANNER_SNIPPET_MATCHING: SNIPPET_MATCHING
+        DETECT_BLACKDUCK_SIGNATURE_SCANNER_UPLOAD_SOURCE_MODE: "true"
       continue-on-error: true
 
     - uses: synopsys-sig-community/blackduck-sarif-formatter@main
       with:
         blackduck_url: ${{ secrets.blackduck_url }}
+        blackduck_project: ${{ inputs.blackduck_project }}
+        blackduck_version: ${{inputs.blackduck_version}}
         blackduck_apiToken: ${{ secrets.blackduck_token }}
         blackduck_scan_full: true
         blackduck_outputFile: ${{github.workspace}}/blackduck-sarif.json
@@ -68,6 +77,8 @@ Get Sarif format report from full Black Duck scan.
         blackduck_policies: true
         blackduck_log_level: INFO
         blackduck_policy_categories: SECURITY,LICENSE
+        blackduck_iac: false
+        blackduck_toolname_for_sarif_full: "BlackDuck SCA Full"
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v2
