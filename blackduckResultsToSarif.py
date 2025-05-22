@@ -659,7 +659,7 @@ def addTags(vulnerability):
             tags.append(f'Exploitability {cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "score" in vulnerability[cvss_version]['temporalMetrics']:
-                tags.append(f'Temporal {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]['score'])}')
+                tags.append(f'Temporal {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]["score"])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "remediationLevel" in vulnerability[cvss_version]['temporalMetrics']:
                 if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == "OFFICIAL_FIX":
