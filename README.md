@@ -30,12 +30,15 @@ By setting the detect.cleanup to false, you will prevent Black Duck to remove th
 | blackduck_policies | If given, policy information is added | false | false |
 | blackduck_scan_full | false for rapid scan results and true for intelligent scan | false | false |
 | blackduck_scanOutputPath | If blackduck_scan_full = false, then this is required. Rapid scan output folder. You must specify scan output folder with --detect.scan.output.path when running the Rapid scan with Black Duck and then give the same folder here, if you want to have rapid scan results as a sarif format report.| ${{github.repository}}/bd_scan | false |
+| blackduck_iac | If given, iac findings are added | false | false |
+| blackduck_toolname_for_sarif_full | Given name is used for sarif tool name for Black Duck full scan results. Default is Synopsys Black Duck Intelligent | Synopsys Black Duck Intelligent  | false |
+| blackduck_toolname_for_sarif_rapid | Given name is used for sarif tool name for Black Duck rapid scan results. Default is Synopsys Black Duck Rapid | Synopsys Black Duck Rapid | false
 
 ## Usage examples
 Get Sarif format report from full Black Duck scan.
 ```yaml
        #------------Black Duck full------------------------#
-      name: Black Duck Analysis with synopsys-action
+    - name: Black Duck Analysis with black-duck-security-scan
       uses: blackduck-inc/black-duck-security-scan@v2
       with:
         blackducksca_token: ${{ secrets.blackduck_token }}
@@ -50,7 +53,6 @@ Get Sarif format report from full Black Duck scan.
         DETECT_PROJECT_NAME: ${{github.repository}}
         DETECT_PROJECT_VERSION_NAME: ${{github.ref_name}}
         DETECT_CODE_LOCATION_NAME: ${{github.repository}}-${{github.ref_name}}
-        DETECT_CLEANUP: "false" # This needs to be set, because of RAPID scan results
         DETECT_TIMEOUT: "7200"
         DETECT_DETECTOR_SEARCH_DEPTH: "20"
         DETECT_DETECTOR_SEARCH_CONTINUE: "true"
@@ -59,10 +61,6 @@ Get Sarif format report from full Black Duck scan.
         DETECT_PUB_DEPENDENCY_TYPES_EXCLUDE: DEV
         DETECT_NPM_DEPENDENCY_TYPES_EXCLUDED: DEV
         DETECT_TOOLS: "ALL,IAC_SCAN" #All is not activating IaC scan, it needs to be activate separately with IAC_SCAN
-        DETECT_BLACKDUCK_SIGNATURE_SCANNER_COPYRIGHT_SEARCH: "true"
-        DETECT_BLACKDUCK_SIGNATURE_SCANNER_LICENSE_SEARCH: "true"
-        DETECT_BLACKDUCK_SIGNATURE_SCANNER_SNIPPET_MATCHING: SNIPPET_MATCHING
-        DETECT_BLACKDUCK_SIGNATURE_SCANNER_UPLOAD_SOURCE_MODE: "true"
       continue-on-error: true
 
     - uses: synopsys-sig-community/blackduck-sarif-formatter@main
@@ -78,10 +76,10 @@ Get Sarif format report from full Black Duck scan.
         blackduck_log_level: INFO
         blackduck_policy_categories: SECURITY,LICENSE
         blackduck_iac: false
-        blackduck_toolname_for_sarif_full: "BlackDuck SCA Full"
+        blackduck_toolname_for_sarif_full: "Black Duck Intelligent"
 
     - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: blackduck-sarif.json
       continue-on-error: true
@@ -92,15 +90,17 @@ Get Sarif format report from full Black Duck scan.
 Get Sarif format report from Rapid Black Duck scan.
 ```yaml
        #------------Black Duck Rapid------------------------#
-    - name: Black Duck Analysis with synopsys-action
-      uses: synopsys-sig/synopsys-action@v1.2.0
+    - name: Black Duck Analysis with black-duck-security-scan
+      uses: blackduck-inc/black-duck-security-scan@v2
       with:
-        blackduck_apiToken: ${{ secrets.blackduck_token }}
-        blackduck_url: ${{ secrets.blackduck_url }}
-        blackduck_scan_full: false
-        github_token: ${{secrets.GITHUB_TOKEN}}
-        blackduck_automation_fixpr: false
-        blackduck_scan_failure_severities: "NONE"
+        blackducksca_token: ${{ secrets.blackduck_token }}
+        blackducksca_url: ${{ secrets.blackduck_url }}
+        blackducksca_scan_full: false
+        blackducksca_fixpr_enabled: false
+        blackducksca_fixpr_maxCount: 10
+        blackducksca_fixpr_filter_severities: 'CRITICAL,HIGH,MEDIUM'
+        blackducksca_scan_failure_severities: NONE
+        github_token: ${{secrets.GITHUB_TOKEN}} # Mandatory when blackduck_fixpr_enabled is set to 'true'
       env:
         DETECT_PROJECT_NAME: ${{github.repository}}
         DETECT_PROJECT_VERSION_NAME: ${{github.ref_name}}
@@ -127,9 +127,10 @@ Get Sarif format report from Rapid Black Duck scan.
         blackduck_policies: true
         blackduck_log_level: INFO
         blackduck_policy_categories: SECURITY,LICENSE
+        blackduck_toolname_for_sarif_rapid: Synopsys Black Duck Rapid
 
     - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: blackduck-sarif.json
       continue-on-error: true

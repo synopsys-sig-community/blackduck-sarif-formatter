@@ -54,7 +54,7 @@ inputs:
     required: false
     default: "Synopsys Black Duck Intelligent"
   blackduck_toolname_for_sarif_rapid:
-    description: "Given name is used for sarif tool name for Black Duck rapid scan results. Default is Synopsys Black Duck Intelligent"
+    description: "Given name is used for sarif tool name for Black Duck rapid scan results. Default is Synopsys Black Duck Rapid"
     required: false
     default: "Synopsys Black Duck Rapid"
 
