@@ -436,8 +436,6 @@ def getHelpMarkdownTableForCVSS4(vulnerability):
     vulnerableSystemConfidentiality = f'{add_square(vulnerability["cvss4"]["vulnerableSystemConfidentiality"]) if "vulnerableSystemConfidentiality" in vulnerability["cvss4"] else ""}'
     exploitMaturity = f'{vulnerability["cvss4"]["exploitMaturity"] if "exploitMaturity" in vulnerability["cvss4"] else ""}'
     nomenclature = f'{vulnerability["cvss4"]["nomenclature"] if "nomenclature" in vulnerability["cvss4"] else ""}'
-    impactSubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["impactSubscore"])) + " (" + str(vulnerability["cvss4"]["impactSubscore"]) + ")" if "impactSubscore" in vulnerability["cvss4"] else ""}'
-    exploitabilitySubscore = f'{add_square(cvss_severity_rating(vulnerability["cvss4"]["exploitabilitySubscore"])) + " (" + str(vulnerability["cvss4"]["exploitabilitySubscore"]) +")" if "exploitabilitySubscore" in vulnerability["cvss4"] else ""}'
     tableText = f'## {getNomenclature(nomenclature)} ([CVSS v4.x Metrics](https://www.first.org/cvss/v4-0/specification-document))\n'
     tableText += f'|   |   |   |   |\n'
     tableText += f'| :-- | :-- | :-- | :-- |\n'
@@ -447,8 +445,7 @@ def getHelpMarkdownTableForCVSS4(vulnerability):
     tableText += f'| Vulnerable System Integrity Impact (VI) | **{vulnerableSystemIntegrity}** | Vulnerable System Availability Impact (VA) | **{vulnerableSystemAvailability}** |\n'
     tableText += f'| Subsequent System Confidentiality Impact (SC) | **{subsequentSystemConfidentiality}** | Subsequent System Integrity Impact (SI) | **{subsequentSystemIntegrity}** |\n'
     tableText += f'| Subsequent System Availability Impact (SA) | **{subsequentSystemAvailability}** | Exploit Maturity (E) | **{exploitMaturity}** |\n'
-    tableText += f'| Exploitability | **{exploitabilitySubscore}** | CVSS Nomenclature | **{nomenclature}** |\n'
-    tableText += f'| Base Score | **{baseScore}** | Impact | **{impactSubscore}** |'
+    tableText += f'| Base Score | **{baseScore}** | CVSS Nomenclature | **{nomenclature}** |'
     tableText += f'\n\n**CVSS vector:** {vector}'
     return tableText
 
