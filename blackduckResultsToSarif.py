@@ -159,10 +159,11 @@ def addFindings():
                         ruleId = f'{vulnerability["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
+                            cisa, helpMarkdown = getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
-                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)},
-                                "properties": {"security-severity": getSeverityScore(getSeverity(vulnerability)), "tags": addTags(vulnerability)},
+                                "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": helpMarkdown},
+                                "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, cisa)},
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(getSeverity(vulnerability).lower())}}
                             rules.append(rule)
                             ruleIds.append(ruleId)
@@ -514,6 +515,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     bdsa_link = ""
     messageText = ""
     related_vuln = None
+    cisa = False
     if vulnerability["source"] == "BDSA":
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) | '
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
@@ -578,6 +580,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     elif "cisa" in vulnerability:
         cve_cisa_kev = vulnerability["cisa"]
     if cve_cisa_kev:
+        cisa =True
         messageText += f'\n\n :warning: **CISA KEV**\n'
         messageText += f'All federal civilian executive branch agencies are required to remediate vulnerabilities in the KEV catalog within prescribed timeframes.\n'
         messageText += f'**{cve_cisa_kev["vulnerabilityName"]}**\n'
@@ -625,7 +628,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}\n"
     if "origins" in component and len(component["origins"]) > 0:
         messageText += f"**Black Duck Component Origin:** {component['origins'][0]['externalId']}"
-    return messageText
+    return cisa, messageText
 
 def getDate(vulnerability, whichDate):
     datetime_to_modify = None
@@ -635,16 +638,19 @@ def getDate(vulnerability, whichDate):
         return datetime.strftime(datetime_to_modify, "%B %d, %Y")
     return "-"
 
-def addTags(vulnerability):
+def addTags(vulnerability, cisa):
     tags = []
     if vulnerability:
+        if cisa: tags.append("KEV")
         cwes = []
         for metadata in vulnerability['_meta']['links']:
             if metadata['rel'] == "cwes":
                 cwes.append("external/cwe/" + metadata["href"].split("/")[-1].lower())
         tags.extend(cwes)
         cvss_version = ""
-        if "cvss3" in vulnerability:
+        if "cvss4" in vulnerability:
+            cvss_version = "cvss4"
+        elif "cvss3" in vulnerability:
             cvss_version = "cvss3"
         else:
             cvss_version = "cvss2"
@@ -652,10 +658,6 @@ def addTags(vulnerability):
             tags.append("exploit available")
         elif "exploitAvailable" in vulnerability and vulnerability["exploitAvailable"]:
             tags.append("exploit available")
-        if "impactSubscore" in vulnerability[cvss_version]:
-            tags.append(f'Impact {cvss_severity_rating(vulnerability[cvss_version]["impactSubscore"])}')
-        if "exploitabilitySubscore" in vulnerability[cvss_version]:
-            tags.append(f'Exploitability {cvss_severity_rating(vulnerability[cvss_version]["exploitabilitySubscore"])}')
         if "temporalMetrics" in vulnerability[cvss_version]:
             if "score" in vulnerability[cvss_version]['temporalMetrics']:
                 tags.append(f'Temporal {cvss_severity_rating(vulnerability[cvss_version]["temporalMetrics"]["score"])}')
@@ -669,8 +671,11 @@ def addTags(vulnerability):
                     tags.append("temporary patch available")
                 if vulnerability[cvss_version]['temporalMetrics']['remediationLevel'] == "WORKAROUND":
                     tags.append("workaround available")
-                elif "workaround" in vulnerability and vulnerability["workaround"]:
-                    tags.append("workaround available")
+        if "workaround" in vulnerability and vulnerability["workaround"]:
+            if not "workaround available" in tags:
+                tags.append("workaround available")
+        if "solution" in vulnerability and vulnerability["solution"]:
+            tags.append("solution available")
         
     tags.append("SCA")
     tags.append("security")
