@@ -493,9 +493,9 @@ def getHelpMarkdownTableForCVSS2_3(vulnerability):
     tableText += f'| Attack complexity | **{attackComplexity}** | Confidentiality | **{confidentialityImpact}** |\n'
     tableText += f'| Integrity | **{integrityImpact}** | Scope | **{scope}** |\n'
     tableText += f'| Privileges required | **{privilegesRequired}** | User interaction | **{userInteraction}** |\n'
-    tableText += f'| Exploitability | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n'
+    tableText += f'| Exploit Code Maturity | **{exploitability}** | Remediation Level | **{remediationLevel}** |\n'
     tableText += f'| Report Confidence | **{reportConfidence}** | Temporal Score | **{temporalMetrics}** |\n'
-    tableText += f'| Exploitability | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |'
+    tableText += f'| Exploitability Score | **{exploitabilitySubscore}** | Impact | **{impactSubscore}** |'
     tableText += f'\n\n**CVSS vector:** {vector}'
     return tableText
 
