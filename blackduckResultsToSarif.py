@@ -645,11 +645,6 @@ def addTags(vulnerability, cisa, dependencyType):
         else:
             tags.append("direct_dependency")
         if cisa: tags.append("KEV")
-        cwes = []
-        for metadata in vulnerability['_meta']['links']:
-            if metadata['rel'] == "cwes":
-                cwes.append("external/cwe/" + metadata["href"].split("/")[-1].lower())
-        tags.extend(cwes)
         cvss_version = ""
         if "cvss4" in vulnerability:
             cvss_version = "cvss4"
@@ -679,6 +674,11 @@ def addTags(vulnerability, cisa, dependencyType):
                 tags.append("workaround available")
         if "solution" in vulnerability and vulnerability["solution"]:
             tags.append("solution available")
+        cwes = []
+        for metadata in vulnerability['_meta']['links']:
+            if metadata['rel'] == "cwes":
+                cwes.append("external/cwe/" + metadata["href"].split("/")[-1].lower())
+        tags.extend(cwes)
         
     tags.append("SCA")
     tags.append("security")
