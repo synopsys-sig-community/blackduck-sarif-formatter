@@ -161,8 +161,8 @@ def addFindings():
                         ruleId = f'{vulnerability["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
-                            dependencyType, cisa, helpMarkdown = getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)
-                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{dependencyType.capitalize()} dependency: {component["componentName"]} {component['componentVersionName']} ({vulnerability["name"]})'[:900]}, 
+                            shortDescription, dependencyType, cisa, helpMarkdown = getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)
+                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{shortDescription})'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                                 "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": helpMarkdown},
                                 "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, cisa, dependencyType)},
@@ -515,17 +515,20 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     messageText = ""
     related_vuln = None
     cisa = False
+    shortDescriptionVuln = f'{vulnerability["_meta"]["href"].split("/")[-1]}'
     if vulnerability["source"] == "BDSA":
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) | '
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
         bdsa_link = f'[View BDSA record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")}) | '
         related_vuln = f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
+        shortDescriptionVuln += f'|{getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]}'
     cve_link = ""
     if vulnerability["source"] == "NVD":
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
     elif getLinksparam(vulnerability, "related-vulnerability", "label") == "NVD":
         cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerability", "href")})'
         related_vuln = f' ({getLinksparam(vulnerability, "related-vulnerability", "href").split("/")[-1]})'
+        shortDescriptionVuln += f'|{getLinksparam(vulnerability, "related-vulnerability", "href").split("/")[-1]}'
 
     messageText += f'**{vulnerability["source"]}** {vulnerability["_meta"]["href"].split("/")[-1]}'
 
@@ -627,7 +630,8 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}\n"
     if "origins" in component and len(component["origins"]) > 0:
         messageText += f"**Black Duck Component Origin:** {component['origins'][0]['externalId']}"
-    return dependencyType, cisa, messageText
+    shortDescription = f'{dependencyType.capitalize()}: {component['componentName']} {component['componentVersionName']} ({shortDescriptionVuln})'
+    return shortDescription, dependencyType, cisa, messageText
 
 def getDate(vulnerability, whichDate):
     datetime_to_modify = None
