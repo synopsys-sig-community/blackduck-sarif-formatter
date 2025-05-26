@@ -59,12 +59,14 @@ def checkDependencyLineNro(filename, dependency):
 def get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component) -> list:
     global origins_cache
     transitive_guidances = []
+    dependency_type = None
     if component and "origins" in component:
         for origin in component["origins"]:
             originID = getLinksparam(origin, "origin", "href").split("/")[-1]
             dependency_paths = get_Dependency_paths(hub, projectId, projectVersionId, originID)
             if dependency_paths and dependency_paths['totalCount'] > 0:
                 for dependency in dependency_paths['items']:
+                    dependency_type = dependency["type"]
                     if dependency["type"] == "TRANSITIVE":
                         if not dependency["path"][-2]["originId"] in origins_cache.keys():
                             transitive_guidance = getLinksData(hub, dependency["path"][-2], "transitive-upgrade-guidance")
@@ -81,7 +83,7 @@ def get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
                                 origins_cache[dependency["path"][0]["originId"]] = transitive_guidance
                         else:
                             transitive_guidances.append(origins_cache.get(dependency["path"][0]["originId"]))
-    return transitive_guidances
+    return dependency_type, transitive_guidances
 
 def get_vulnerability_overview(hub, vulnerability):
     return hub.execute_get(vulnerability['_meta']['href']).json()
@@ -159,11 +161,11 @@ def addFindings():
                         ruleId = f'{vulnerability["name"]}:{component["componentName"]}:{component["componentVersionName"]}'
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
-                            cisa, helpMarkdown = getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)
+                            dependencyType, cisa, helpMarkdown = getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)
                             rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                                 "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": helpMarkdown},
-                                "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, cisa)},
+                                "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, cisa, dependencyType)},
                                 "defaultConfiguration":{"level":nativeSeverityToLevel(getSeverity(vulnerability).lower())}}
                             rules.append(rule)
                             ruleIds.append(ruleId)
@@ -585,7 +587,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
         messageText += f'**Action:**\n'
         messageText += f'{cve_cisa_kev["requiredAction"]}'
     messageText += f'\n\n## :arrow_up: Upgrade Recommendation\n'
-    transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
+    dependencyType, transient_upgrade_guidances = get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
     if transient_upgrade_guidances:
         for guidance in transient_upgrade_guidances:
             messageText += f'\n### For Direct Dependency {guidance["componentName"]} {guidance["versionName"]}\n'
@@ -625,7 +627,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}\n"
     if "origins" in component and len(component["origins"]) > 0:
         messageText += f"**Black Duck Component Origin:** {component['origins'][0]['externalId']}"
-    return cisa, messageText
+    return dependencyType, cisa, messageText
 
 def getDate(vulnerability, whichDate):
     datetime_to_modify = None
@@ -635,9 +637,13 @@ def getDate(vulnerability, whichDate):
         return datetime.strftime(datetime_to_modify, "%B %d, %Y")
     return "-"
 
-def addTags(vulnerability, cisa):
+def addTags(vulnerability, cisa, dependencyType):
     tags = []
     if vulnerability:
+        if dependencyType and dependencyType == "TRANSITIVE":
+            tags.append("transitive_dependency")
+        else:
+            tags.append("direct_dependency")
         if cisa: tags.append("KEV")
         cwes = []
         for metadata in vulnerability['_meta']['links']:
