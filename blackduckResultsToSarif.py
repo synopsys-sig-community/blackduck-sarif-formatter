@@ -162,7 +162,7 @@ def addFindings():
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
                             shortDescription, dependencyType, cisa, helpMarkdown = getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)
-                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{shortDescription})'[:900]}, 
+                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{shortDescription}'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                                 "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": helpMarkdown},
                                 "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, cisa, dependencyType)},
