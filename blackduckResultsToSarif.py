@@ -162,7 +162,7 @@ def addFindings():
                         ## Adding vulnerabilities as a rule
                         if not ruleId in ruleIds:
                             dependencyType, cisa, helpMarkdown = getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulnerability, dependency_tree, dependency_tree_matched)
-                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
+                            rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{dependencyType.capitalize()} dependency: {component["componentName"]} {component['componentVersionName']} ({vulnerability["name"]})'[:900]}, 
                                 "fullDescription":{"text":f'{vulnerability["description"][:900] if vulnerability["description"] else "-"}', "markdown": f'{vulnerability["description"] if vulnerability["description"] else "-"}'},
                                 "help":{"text":f'{vulnerability["description"] if vulnerability["description"] else "-"}', "markdown": helpMarkdown},
                                 "properties": {"security-severity": getSeverityScore(vulnerability), "tags": addTags(vulnerability, cisa, dependencyType)},
@@ -179,7 +179,7 @@ def addFindings():
                         result['ruleId'] = ruleId
                         if locations and len(locations) > 0:
                             result['locations'] = locations
-                        result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                        # result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                         results.append(result)
                 # Creating sarif for policy violations
                 if policies and len(policies) > 0:
