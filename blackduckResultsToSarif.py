@@ -179,7 +179,7 @@ def addFindings():
                         result['ruleId'] = ruleId
                         if locations and len(locations) > 0:
                             result['locations'] = locations
-                        # result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                        result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                         results.append(result)
                 # Creating sarif for policy violations
                 if policies and len(policies) > 0:
@@ -273,7 +273,6 @@ def checkLocations(hub,projectId,projectVersionId,component):
     locations, dependency_tree, dependency_tree_matched = [],[],[]
     if matchedFiles and matchedFiles['totalCount'] > 0:
         for matchFile in matchedFiles['items']:
-            logging.debug(f'matchFile: {matchFile}')
             fileName = matchFile['filePath']['archiveContext'].split('!')[0]
             if not fileName:
                 fileName = matchFile['filePath']['compositePathContext'].split('!')[0]
@@ -284,7 +283,6 @@ def checkLocations(hub,projectId,projectVersionId,component):
     else:
         dependencies = getDependenciesForComponent(hub, projectId, projectVersionId, component)
         if dependencies and len(dependencies) > 0:
-            logging.debug(dependencies)
             testingDependencies = []
             if len(dependencies[0]) > 1:
                 testingDependencies = dependencies[0][-2]
@@ -302,13 +300,22 @@ def checkLocations(hub,projectId,projectVersionId,component):
             if fileWithPath:
                 locations.append({"physicalLocation":{"artifactLocation":{"uri": fileWithPath.replace('\\','/')},"region":{"startLine":lineNro}}})
             else:
-                locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
+                locations.append({"physicalLocation":{"artifactLocation":{"uri":packageManagerFile(dependencies)},"region":{"startLine":1}}})
             dependency_tree.extend(dependencies)
         else:
             locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
     if not len(locations) > 0:
         locations.append({"physicalLocation":{"artifactLocation":{"uri":"not_found_from_package_manager_files"},"region":{"startLine":1}}})
     return locations, dependency_tree, dependency_tree_matched
+
+def packageManagerFile(dependencies):
+    packageManager = dependencies[0][-1].split('-')[-1]
+    if packageManager:
+        match packageManager:
+            case "maven": return "pom.xml"
+            case "npm": return "package.json"
+            case "pip": return "requirements.txt"
+            case _: return "not_found_from_package_manager_files"
 
 def getSeverity(vulnerability):
     if "severity" in vulnerability:
