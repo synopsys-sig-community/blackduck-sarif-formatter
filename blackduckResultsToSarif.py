@@ -12,6 +12,7 @@ from blackduck.HubRestApi import HubInstance
 from timeit import default_timer as timer
 import requests
 from datetime import datetime
+import urllib3
 
 __author__ = "Jouni Lehto"
 __versionro__="0.2.11"
@@ -23,6 +24,7 @@ MAX_LIMIT=1000
 supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",r".\.csproj",r".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
 origins_cache = {}
+urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
 
 def find_file_dependency_file(dependency):
     logging.debug(f"Searching {dependency} from {os.getcwd()}")
@@ -129,6 +131,15 @@ def getPolicyRules(hub, data):
         if metadata['rel'] == "policy-rule":
             policies.append(hub.execute_get(f'{metadata["href"]}?limit={MAX_LIMIT}').json())
     return policies
+
+def getEPSS_scoring(vulnerability):
+    response = requests.get(f'https://api.first.org/data/v1/epss?cve={vulnerability}', verify=False)
+    if response.status_code == 200:
+        epssJson = response.json()["data"][0]
+        logging.debug(epssJson)
+        epss = round(float(epssJson["epss"])*100, 3)
+        percentile = int(round(float(epssJson["percentile"])*100, 0))
+        return epss, percentile
 
 def addFindings():
     global args
@@ -522,27 +533,32 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     messageText = ""
     related_vuln = None
     cisa = False
+    epss, percentile = None, None
     shortDescriptionVuln = f'{vulnerability["_meta"]["href"].split("/")[-1]}'
     if vulnerability["source"] == "BDSA":
         bdsa_link = f'[View BDSA record]({vulnerability["_meta"]["href"]}) | '
     elif getLinksparam(vulnerability, "related-vulnerabilities", "label") == "BDSA":
         bdsa_link = f'[View BDSA record]({getLinksparam(vulnerability, "related-vulnerabilities", "href")}) | '
-        related_vuln = f' ({getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]})'
-        shortDescriptionVuln += f'|{getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]}'
+        related_vuln = getLinksparam(vulnerability, "related-vulnerabilities", "href").split("/")[-1]
+        shortDescriptionVuln += f'|{related_vuln}'
     cve_link = ""
     if vulnerability["source"] == "NVD":
         cve_link = f'[View CVE record]({vulnerability["_meta"]["href"]})'
+        epss, percentile = getEPSS_scoring(vulnerability["name"])
     elif getLinksparam(vulnerability, "related-vulnerability", "label") == "NVD":
         cve_link = f'[View CVE record]({getLinksparam(vulnerability, "related-vulnerability", "href")})'
-        related_vuln = f' ({getLinksparam(vulnerability, "related-vulnerability", "href").split("/")[-1]})'
-        shortDescriptionVuln += f'|{getLinksparam(vulnerability, "related-vulnerability", "href").split("/")[-1]}'
+        related_vuln = getLinksparam(vulnerability, "related-vulnerability", "href").split("/")[-1]
+        shortDescriptionVuln += f'|{related_vuln}'
+        epss, percentile = getEPSS_scoring(related_vuln)
 
     messageText += f'**{vulnerability["source"]}** {vulnerability["_meta"]["href"].split("/")[-1]}'
 
     if related_vuln:
-        messageText += related_vuln
+        messageText += f' ({related_vuln})'
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
+    messageText += f'\n**[EPSS Score](https://www.first.org/epss/user-guide):**  {epss}% ({percentile}th percentile)'
+    # logging.debug(f'Vulnerability {vulnerability["name"]} EPSS Score: {epss}% ({percentile}th percentile)')
 
     #Adding link to BD to see the issues
     seeInBD=f'{hub.get_apibase()}/projects/{projectId}/versions/{projectVersionId}/vulnerability-bom?selectedComponent={component["component"].split("/")[-1]}&componentList.q={component["componentName"].replace(" ", "+")}'
