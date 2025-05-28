@@ -557,7 +557,8 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
         messageText += f' ({related_vuln})'
     #Adding score
     messageText += f' **Score** { getSeverityScore(vulnerability)}/10'
-    messageText += f'\n**[EPSS Score](https://www.first.org/epss/user-guide):**  {epss}% ({percentile}th percentile)'
+    if epss and percentile:
+        messageText += f'\n**[EPSS Score](https://www.first.org/epss/user-guide):**  {epss}% ({percentile}th percentile)'
     # logging.debug(f'Vulnerability {vulnerability["name"]} EPSS Score: {epss}% ({percentile}th percentile)')
 
     #Adding link to BD to see the issues
