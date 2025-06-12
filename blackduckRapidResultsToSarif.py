@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # This script will collect all vulnerabilites and licenses which have a policy violation.
-import glob
 import json
 import logging
 import argparse
@@ -14,13 +13,12 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.3"
+__versionro__="0.2.5"
 
 #Global variables
 args = "" 
 MAX_LIMIT=1000
-toolName="Synopsys Black Duck Rapid"
-supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",".\.csproj",".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
+supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",r".\.csproj",r".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
 
 def find_file_dependency_file(dependency):
@@ -57,7 +55,7 @@ def checkDependencyLineNro(filename, dependency):
 
 def get_rapid_scan_results():
     hub = HubInstance(args.url, api_token=args.token, insecure=False)
-    filelist = glob.glob(args.scanOutputPath + "/*.json")
+    filelist = get_rapid_result_files(args.scanOutputPath)
     if filelist:
         if len(filelist) <= 0:
             return None
@@ -79,6 +77,15 @@ def get_rapid_scan_results():
         return rapid_scan_results
     else:
         raise Exception("Didn't find any RAPID scan result json files. Note, that you need to give --detect.cleanup=false, so that results are not removed after scan is done.")
+
+def get_rapid_result_files(startingpoint):
+    allDeveloperScanResultFiles = []
+    for dirpath, dirnames, filenames in os.walk(startingpoint, True):
+        developerScanResultFiles = {e for e in filenames for pattern in [".\SBlackDuck_DeveloperMode_Result.json"] if re.search(pattern, e)}
+        if developerScanResultFiles and len(developerScanResultFiles) > 0:
+            for developerFile in developerScanResultFiles:
+                allDeveloperScanResultFiles.append(os.path.join(dirpath, developerFile))
+    return allDeveloperScanResultFiles
 
 def get_json(hub, url):
     url += f'?limit={MAX_LIMIT}'
@@ -105,7 +112,7 @@ def addFindings():
         for component in components:
             for vulnerability in component["policyViolationVulnerabilities"]:
                 rule, result = {}, {}
-                ruleId = vulnerability["name"]
+                ruleId = f'{vulnerability["name"]}:{component["componentName"]}:{component["versionName"]}'
                 ## Adding vulnerabilities as a rule
                 if not ruleId in ruleIds:
                     rule = {"id":ruleId, "helpUri": vulnerability['_meta']['href'], "shortDescription":{"text":f'{vulnerability["name"]}: {component["componentName"]}'[:900]}, 
@@ -126,7 +133,7 @@ def addFindings():
                         component_to_find = dependencies[0]
                         if len(dependencies) > 1:
                             component_to_find = dependencies[1]
-                        fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-','\-'))
+                        fileWithPath, lineNumber = find_file_dependency_file((component_to_find.replace('/',':').split(':')[0]).replace('-',r'\-'))
                         if lineNumber: 
                             locations.append({"physicalLocation":{"artifactLocation":{"uri":f'{fileWithPath}'},"region":{"startLine":int(lineNumber)}}})
                         else:
@@ -358,6 +365,7 @@ if __name__ == '__main__':
         parser.add_argument('--policies', help="true, policy information is added", default=False, type=str2bool)
         parser.add_argument('--policyCategories', help="Comma separated list of policy categories, which violations will affect. \
             Options are [COMPONENT,SECURITY,LICENSE,UNCATEGORIZED,OPERATIONAL], default=\"SECURITY\"", default="SECURITY")
+        parser.add_argument('--toolNameforSarif', help="Tool name for sarif", default="Synopsys Black Duck Rapid", required=False)
         args = parser.parse_args()
         #Initializing the logger
         if args.log_level == "9": log_level = "DEBUG"
@@ -372,7 +380,7 @@ if __name__ == '__main__':
         sarif_json = getSarifJsonHeader()
         results = {}
         results['results'] = findings
-        results['tool'] = getSarifJsonFooter(toolName, rules)
+        results['tool'] = getSarifJsonFooter(args.toolNameforSarif, rules)
         runs = []
         runs.append(results)
         sarif_json['runs'] = runs
