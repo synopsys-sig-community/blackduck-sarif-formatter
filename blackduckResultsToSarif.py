@@ -190,7 +190,7 @@ def addFindings():
                         result['ruleId'] = ruleId
                         if locations and len(locations) > 0:
                             result['locations'] = locations
-                        # result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                        result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{vulnerability["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                         results.append(result)
                 # Creating sarif for policy violations
                 if policies and len(policies) > 0:
@@ -213,7 +213,7 @@ def addFindings():
                             result['ruleId'] = ruleId
                             if locations and len(locations) > 0:
                                 result['locations'] = locations
-                            # result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policy_violation["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
+                            result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{policy_violation["name"]}{component["componentName"]}').encode(encoding='UTF-8')).hexdigest()}
                             results.append(result)
         if args.add_iac:
             iac_results = getIACFindings(hub, projectId, projectVersionId)
@@ -238,7 +238,7 @@ def addFindings():
                         iac_locations.append({"physicalLocation":{"artifactLocation":{"uri": iac_result["filePath"]},"region":{"startLine":int(iac_result["location"]["start"]["line"])}}})
                         if iac_locations and len(iac_locations) > 0:
                             result['locations'] = iac_locations
-                        # result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{iac_result["checkerId"]}{iac_result["fileName"]}').encode(encoding='UTF-8')).hexdigest()}
+                        result['partialFingerprints'] = {"primaryLocationLineHash": hashlib.sha256((f'{iac_result["checkerId"]}{iac_result["fileName"]}').encode(encoding='UTF-8')).hexdigest()}
                         results.append(result)
     return results, rules
 
@@ -654,7 +654,7 @@ def getHelpMarkdown(hub, projectId, projectVersionId, policies, component, vulne
     messageText += f"**Black Duck Component Version:** {component['componentVersionName']}\n"
     if "origins" in component and len(component["origins"]) > 0:
         messageText += f"**Black Duck Component Origin:** {component['origins'][0]['externalId']}"
-    shortDescription = f'{dependencyType.capitalize()}: {component['componentName']} {component['componentVersionName']} ({shortDescriptionVuln})'
+    shortDescription = f"{dependencyType.capitalize()}: {component['componentName']} {component['componentVersionName']} ({shortDescriptionVuln})"
     return shortDescription, dependencyType, cisa, messageText
 
 def getDate(vulnerability, whichDate):
