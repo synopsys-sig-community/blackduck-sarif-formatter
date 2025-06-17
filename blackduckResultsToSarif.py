@@ -21,6 +21,7 @@ __versionro__="0.2.12"
 args = "" 
 MAX_LIMIT=1000
 
+toolName="Synopsys Black Duck Intelligent"
 supportedPackageManagerFiles = ["pom.xml","requirements.txt","package.json","package-lock.json",r".\.csproj",r".\.sln","go.mod","Gopkg.lock","gogradle.lock","vendor.json","vendor.conf"]
 dependency_cache = dict()
 origins_cache = {}
