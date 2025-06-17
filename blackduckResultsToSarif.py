@@ -15,7 +15,7 @@ from datetime import datetime
 import urllib3
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.11"
+__versionro__="0.2.12"
 
 #Global variables
 args = "" 
