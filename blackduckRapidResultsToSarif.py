@@ -13,7 +13,7 @@ from timeit import default_timer as timer
 from datetime import datetime
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.5"
+__versionro__="0.2.13"
 
 #Global variables
 args = "" 

@@ -15,7 +15,7 @@ from datetime import datetime
 import urllib3
 
 __author__ = "Jouni Lehto"
-__versionro__="0.2.12"
+__versionro__="0.2.13"
 
 #Global variables
 args = "" 
@@ -72,7 +72,7 @@ def get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component)
                     dependency_type = dependency["type"]
                     if dependency["type"] == "TRANSITIVE":
                         if not dependency["path"][-2]["originId"] in origins_cache.keys():
-                            transitive_guidance = getLinksData(hub, dependency["path"][-2], "transitive-upgrade-guidance")
+                            transitive_guidance = getLinksData(hub, dependency["path"][-2], "transitive-upgrade-guidances")
                             if transitive_guidance:
                                 transitive_guidances.append(transitive_guidance)
                                 origins_cache[dependency["path"][-2]["originId"]] = transitive_guidance
@@ -116,10 +116,11 @@ def createFilterForComponents():
     return policyCategoryOptions[:-1]
 
 def getLinksData(hub, data, relName, headers=None):
-    if headers:
-        logging.info(f'{getLinksparam(data,relName,"href")}')
-        return hub.execute_get(f'{getLinksparam(data,relName,"href")}', custom_headers=headers).json()
-    return hub.execute_get(f'{getLinksparam(data,relName,"href")}?limit={MAX_LIMIT}').json()
+        url = getLinksparam(data,relName,"href")
+        if url:
+            if headers:
+                return hub.execute_get(url, custom_headers=headers).json()
+            return hub.execute_get(f'{url}?limit={MAX_LIMIT}').json()
 
 def getLinksparam(data, relName, param):
     for metadata in data['_meta']['links']:
