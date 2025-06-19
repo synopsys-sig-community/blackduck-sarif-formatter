@@ -62,7 +62,7 @@ def checkDependencyLineNro(filename, dependency):
 def get_Transitive_upgrade_guidance(hub, projectId, projectVersionId, component) -> list:
     global origins_cache
     transitive_guidances = []
-    dependency_type = None
+    dependency_type = "DIRECT"
     if component and "origins" in component:
         for origin in component["origins"]:
             originID = getLinksparam(origin, "origin", "href").split("/")[-1]
