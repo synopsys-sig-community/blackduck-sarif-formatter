@@ -13,9 +13,10 @@ from timeit import default_timer as timer
 import requests
 from datetime import datetime
 import urllib3
+import version
 
-__author__ = "Jouni Lehto"
-__versionro__="0.2.13"
+__author__ = version.__author__
+__versionro__ = version.__versionro__
 
 #Global variables
 args = "" 
